@@ -121,3 +121,45 @@ def test_short_flag():
 
 def test_bullets_trimmed():
     assert [s["text"] for s in split_steps("- chop onions\n• fry them")] == ["chop onions", "fry them"]
+
+
+def _names(text):
+    r = parse_recipe(text)
+    return [i.name for i in r.ingredients], [s["text"] for s in r.steps]
+
+
+def test_trailing_paren_note_is_kept_out_of_the_name():
+    ings = parse_recipe("大蒜 3瓣（切末，拍碎）\n蔥 1根(切段)\n2 eggs (beaten)\n炒香").ingredients
+    assert [(i.name, i.amount, i.unit, i.note) for i in ings] == [
+        ("大蒜", 3, "瓣", "切末，拍碎"), ("蔥", 1, "根", "切段"), ("eggs", 2, None, "beaten"),
+    ]
+
+
+def test_name_then_bare_number():
+    assert _names("Eggs 2\nTomatoes 3\nScramble the eggs") == (["Eggs", "Tomatoes"], ["Scramble the eggs"])
+
+
+def test_multiplier():
+    i = parse_ingredient("2x eggs")
+    assert (i.name, i.amount) == ("eggs", 2)
+
+
+def test_bare_items_next_to_ingredients():
+    assert _names("1 lb chicken\nsalt & pepper\nolive oil\nSeason the chicken\nRoast 40 min") == (
+        ["chicken", "salt & pepper", "olive oil"], ["Season the chicken", "Roast 40 min"],
+    )
+    assert _names("300g 豬絞肉\n蔥花\n薑末\n醬油 2大匙\n豬絞肉加調味料拌勻") == (
+        ["豬絞肉", "蔥花", "薑末", "醬油"], ["豬絞肉加調味料拌勻"],
+    )
+
+
+def test_bare_list_without_quantities():
+    assert _names("eggplant\ngarlic\nsoy sauce\nFry everything together until soft") == (
+        ["eggplant", "garlic", "soy sauce"], ["Fry everything together until soft"],
+    )
+    assert _names("雞蛋、番茄、蔥\n番茄切塊，雞蛋打散\n先炒蛋再炒番茄")[0] == ["雞蛋", "番茄", "蔥"]
+
+
+def test_short_steps_stay_steps():
+    assert _names("Mix flour and water\nKnead\nRest 30 min\nRoll out")[0] == []
+    assert _names("番茄切塊\n雞蛋打散\n先炒蛋再炒番茄")[0] == []

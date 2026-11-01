@@ -124,13 +124,32 @@ def _clean_unit(unit: str | None) -> str | None:
     return unit.strip().rstrip(".") if unit else None
 
 
-def parse_ingredient(text: str) -> Ingredient:
-    """Parse one ingredient ('2 cloves garlic', '蒜頭 3瓣', '鹽 適量')."""
+_TRAILING_PAREN = re.compile(r"\s*[（(]([^()（）]*)[)）]\s*$")
+_MULTIPLIER = re.compile(r"^(\d+(?:\.\d+)?)\s*[x×]\s+", re.I)
+
+
+def _core(text: str) -> tuple[str, str | None]:
+    """Strip bullets, a trailing '(diced)' / '（切末）' note and a '2x' multiplier."""
     line = _strip_bullet(text).strip()
     note = None
+    m = _TRAILING_PAREN.search(line)
+    if m and m.start() > 0:
+        note = m[1].strip() or None
+        line = line[: m.start()].strip()
+    line = _MULTIPLIER.sub(r"\1 ", line)
+    return line, note
+
+
+def _add_note(a: str | None, b: str | None) -> str | None:
+    return ", ".join(x for x in (a, b) if x) or None
+
+
+def parse_ingredient(text: str) -> Ingredient:
+    """Parse one ingredient ('2 cloves garlic', '蒜頭 3瓣', '鹽 適量')."""
+    line, note = _core(text)
     m = _TO_TASTE.search(line)
     if m and m.start() > 0:
-        note = m[1]
+        note = _add_note(m[1], note)
         line = line[: m.start()].strip()
 
     m = _QTY_FIRST.match(line)
@@ -152,10 +171,27 @@ def parse_ingredient(text: str) -> Ingredient:
     return Ingredient(name=line.strip(" ,，:："), note=note)
 
 
+def _split_outside_parens(line: str) -> list[str]:
+    """Split on , ， 、 but not inside (…) / （…）: '蒜 3瓣（切末，拍碎）' stays whole."""
+    pieces, buf, depth = [], "", 0
+    for ch in line:
+        if ch in "(（":
+            depth += 1
+        elif ch in ")）":
+            depth = max(0, depth - 1)
+        if ch in ",，、" and depth == 0:
+            pieces.append(buf)
+            buf = ""
+        else:
+            buf += ch
+    pieces.append(buf)
+    return pieces
+
+
 def parse_ingredient_line(line: str) -> list[Ingredient]:
     """Split on , ， 、 and parse each piece. Prep words attach to the previous item."""
     items: list[Ingredient] = []
-    for piece in re.split(r"[,，、]", line):
+    for piece in _split_outside_parens(line):
         piece = piece.strip()
         if not piece:
             continue
@@ -171,8 +207,10 @@ def parse_ingredient_line(line: str) -> list[Ingredient]:
 
 def looks_like_ingredient(line: str) -> bool:
     """Heuristic for text without section headers."""
-    text = _strip_bullet(line).strip()
-    if not text or len(text) > 40 or _STEP_NUMBER.match(text):
+    if _STEP_NUMBER.match(line):
+        return False
+    text, _ = _core(line)
+    if not text or len(text) > 40:
         return False
     if _TO_TASTE.search(text) and _TO_TASTE.search(text).start() > 0:
         return True
@@ -185,7 +223,60 @@ def looks_like_ingredient(line: str) -> bool:
             return bool(m["unit"])
         return bool(m["unit"]) or bool(re.match(r"^\s+\S", rest)) or bool(re.match(r"^[^\W\d_]", rest))
     m = re.search(rf"(?:{ASCII_QTY}|{ZH_QTY})\s*(?P<unit>{UNIT})$", text, re.I)
-    return bool(m)
+    if m:
+        return True
+    # "Eggs 2": a short name and a bare number
+    m = re.match(rf"^(?P<name>[^\d]{{1,20}}?)\s*[:：]?\s+(?P<qty>{ASCII_QTY})$", text, re.I)
+    if m and not _starts_with_verb(m["name"]) and not _NOT_AMOUNT.match(text[m.end("qty"):]):
+        return True
+    return _is_item_list(text)
+
+
+# Lines that start with these are instructions, not items.
+_EN_VERBS = {
+    "add", "bake", "beat", "blanch", "boil", "bring", "chop", "combine", "cook", "cool", "cover", "cut",
+    "dice", "drain", "fold", "fry", "garnish", "grill", "heat", "let", "marinate", "melt", "mince", "mix",
+    "peel", "place", "pour", "preheat", "put", "reduce", "remove", "rinse", "roast", "saute", "sauté",
+    "season", "serve", "set", "simmer", "slice", "soak", "sprinkle", "steam", "stir", "strain", "taste",
+    "toss", "top", "transfer", "turn", "wash", "whisk", "enjoy", "then", "and", "until", "once",
+    "scramble", "knead", "rest", "roll", "spread", "brush", "flip", "wait", "keep", "make", "use",
+    "squeeze", "shred", "crack", "break", "blend", "puree", "chill", "freeze", "store", "divide",
+}
+# Sentence words: a line with these reads as an instruction ("fry the eggs").
+_EN_SENTENCE = {"the", "a", "an", "into", "with", "until", "in", "on", "onto", "for", "it", "them", "is", "are"}
+# Cooking-verb characters anywhere in a short Chinese line ("番茄切塊", "雞蛋打散").
+_ZH_VERB_ANY = re.compile(r"[切炒煮拌蒸煎炸燙汆洗醃撒攪放加倒打泡烤淋燜滷翻剁剝削燉焯滾熬]")
+_ZH_VERB_START = re.compile(r"^(?:切|炒|加|煮|放|倒|拌|蒸|煎|炸|燙|汆|洗|醃|撒|攪|下|起|熱|先|再|然|把|將|用|等|待|最後|接著|轉|關|蓋|燜|滷|烤|淋|擺|盛|泡|沖|翻)")
+
+
+def _starts_with_verb(text: str) -> bool:
+    text = text.strip().lower()
+    if not text:
+        return False
+    if has_cjk(text[:1]):
+        return bool(_ZH_VERB_START.match(text))
+    return text.split()[0].strip(",.:;") in _EN_VERBS
+
+
+def _is_bare_item(text: str) -> bool:
+    """A short noun-ish line such as 'salt' or '蔥花': no verb, no sentence punctuation."""
+    core, _ = _core(text)
+    if not core or _STEP_NUMBER.match(text) or re.search(r"[。.!！?？;；]", core):
+        return False
+    if has_cjk(core):
+        if len(core) > 8 or _ZH_VERB_ANY.search(core):
+            return False
+    else:
+        words = [w.strip(",.:;").lower() for w in core.split()]
+        if len(core) > 24 or len(words) > 3 or any(w in _EN_SENTENCE for w in words):
+            return False
+    return not _starts_with_verb(core)
+
+
+def _is_item_list(text: str) -> bool:
+    """'雞蛋、番茄、蔥' / 'eggs, tomatoes, scallions': two or more bare items."""
+    pieces = [p.strip() for p in _split_outside_parens(text) if p.strip()]
+    return len(pieces) >= 2 and all(_is_bare_item(p) for p in pieces)
 
 
 # ---------------------------------------------------------------------------
@@ -327,11 +418,29 @@ def parse_recipe(text: str, opts: SplitOptions | None = None) -> ParsedRecipe:
             else:
                 step_lines.append(line)
     else:
-        for raw in lines:
-            line = raw.strip()
-            if not line or _is_junk(line):
-                continue
-            (ing_lines if looks_like_ingredient(line) else step_lines).append(line)
+        kept = [ln.strip() for ln in lines if ln.strip() and not _is_junk(ln.strip())]
+        is_ing = [looks_like_ingredient(ln) for ln in kept]
+        bare = [_is_bare_item(ln) for ln in kept]
+        # Bare items ("salt", "蔥花") count as ingredients when they sit next to
+        # ingredients, or in a run of two or more at the top, before the steps.
+        changed = True
+        while changed:
+            changed = False
+            for i, ln in enumerate(kept):
+                if is_ing[i] or not bare[i]:
+                    continue
+                near = (i > 0 and is_ing[i - 1]) or (i + 1 < len(kept) and is_ing[i + 1])
+                if near:
+                    is_ing[i] = changed = True
+        if not any(is_ing):
+            run = 0
+            while run < len(kept) and bare[run]:
+                run += 1
+            if run >= 2 and run < len(kept):
+                for i in range(run):
+                    is_ing[i] = True
+        for ln, ing in zip(kept, is_ing):
+            (ing_lines if ing else step_lines).append(ln)
 
     ingredients = [ing for ln in ing_lines for ing in parse_ingredient_line(ln)]
     steps = split_steps("\n".join(step_lines), opts) if step_lines else []

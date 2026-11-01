@@ -1,0 +1,36 @@
+# Edit the three marked values, create secrets.env, then:  kubectl apply -k deploy/k8s/overlays/prod
+# (or `make deploy REGISTRY=... TAG=...`, which sets the images for you)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: mela
+resources:
+  - ../../base
+
+# 1) Your registry and tag
+images:
+  - name: mela-api
+    newName: registry.example.com/mela/mela-api   # EDIT
+    newTag: "0.1.0"
+  - name: mela-web
+    newName: registry.example.com/mela/mela-web   # EDIT
+    newTag: "0.1.0"
+
+# 2) Secrets come from secrets.env (git-ignored). See secrets.env.example.
+secretGenerator:
+  - name: mela-secrets
+    envs:
+      - secrets.env
+
+patches:
+  # 3) Your hostname (and ingress class / TLS issuer if not nginx + cert-manager)
+  - target: { kind: Ingress, name: mela }
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: mela.example.com            # EDIT
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: mela.example.com            # EDIT
+      - op: add
+        path: /metadata/annotations/cert-manager.io~1cluster-issuer
+        value: letsencrypt                 # EDIT or remove if you manage TLS another way

@@ -1,0 +1,16 @@
+:root {
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-press: 120ms;
+  --dur-change: 200ms;
+  --dur-sheet: 320ms;
+  --press-scale: 0.97;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-press: 0ms;
+    --dur-change: 0ms;
+    --dur-sheet: 0ms;
+    --press-scale: 1;
+  }
+}

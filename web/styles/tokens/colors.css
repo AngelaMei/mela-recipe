@@ -1,0 +1,89 @@
+/* Colour tokens. Write code against the semantic tokens, never the raw scale. */
+:root {
+  /* Raw scale */
+  --cream-50: #fffdf8;
+  --cream-100: #fbf7ef;
+  --cream-200: #f4ede0;
+  --cream-300: #ebe1cf;
+  --cream-400: #ddd0b9;
+  --ink-300: #c9bcab;
+  --ink-500: #85786b; /* 4.0:1 on cream — placeholders and disabled only */
+  --ink-600: #6a5e53; /* 5.9:1 on cream */
+  --ink-700: #4a4038;
+  --ink-800: #3a312a;
+  --ink-900: #2a221c;
+  --terracotta-500: #ad4e34; /* white on it: 5.5:1 */
+  --terracotta-600: #94412a;
+  --terracotta-100: #f5e1d8;
+  --sage-500: #5f7f51;
+  --sage-100: #e3ead9;
+
+  /* Semantic */
+  --bg-app: var(--cream-100);
+  --bg-linen: var(--cream-200);
+  --linen-thread: rgba(120, 92, 56, 0.075);
+  --surface-card: var(--cream-50);
+  --surface-sunken: var(--cream-200);
+  --line: #e7dccb;
+  --line-strong: #cdbfa8;
+
+  --text-primary: var(--ink-900);
+  --text-body: var(--ink-800);
+  --text-secondary: var(--ink-600);
+  --text-tertiary: var(--ink-500);
+  --text-on-accent: #ffffff;
+
+  --accent: var(--terracotta-500);
+  --accent-press: var(--terracotta-600);
+  --accent-soft: var(--terracotta-100);
+  --success: var(--sage-500);
+  --success-soft: var(--sage-100);
+
+  --nav-bg: var(--ink-900);
+  --nav-icon: var(--cream-300);
+  --nav-active-bg: var(--cream-100);
+  --nav-active-text: var(--terracotta-500);
+
+  --inverse-bg: var(--ink-900);
+  --inverse-text: var(--cream-50);
+
+  --overlay-button: rgba(255, 255, 255, 0.92);
+  --scrim: rgba(30, 22, 16, 0.42);
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg-app: #1d1915;
+  --bg-linen: #26201b;
+  --linen-thread: rgba(255, 238, 214, 0.045);
+  --surface-card: #27211c;
+  --surface-sunken: #2f2822;
+  --line: #3a322b;
+  --line-strong: #564a40;
+
+  --text-primary: #f5eee3;
+  --text-body: #e8dfd1;
+  --text-secondary: #bcae9c;
+  --text-tertiary: #8f8273;
+  --text-on-accent: #241812;
+
+  --accent: #e0866d;
+  --accent-press: #ea9a83;
+  --accent-soft: rgba(224, 134, 109, 0.18);
+  --success: #9db88c;
+  --success-soft: rgba(157, 184, 140, 0.18);
+
+  --nav-bg: #3a312a;
+  --nav-icon: #cfc3b2;
+  --nav-active-bg: #f5eee3;
+  --nav-active-text: #a4482f;
+
+  --inverse-bg: #f5eee3;
+  --inverse-text: #1d1915;
+
+  --overlay-button: rgba(39, 33, 28, 0.92);
+  --scrim: rgba(0, 0, 0, 0.55);
+
+  color-scheme: dark;
+}

@@ -1,0 +1,4 @@
+{
+  "_comment": "Designer-delivered plates: 1024x1024 transparent WebP, top-down, light from top-left, no baked shadow. Add { \"id\": \"celadon\", \"image\": \"/plates/celadon.webp\", \"foodInset\": 22 }. Plates without an image use the CSS glaze in styles/tokens/plates.css.",
+  "plates": []
+}

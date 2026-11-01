@@ -1,0 +1,59 @@
+# Nightly pg_dump, keeps the last 14 days on its own volume.
+# Copy these off-cluster too (e.g. to object storage) if the cluster's disks aren't backed up.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mela-backups
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mela-backup
+spec:
+  schedule: "17 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: mela-backup
+            app.kubernetes.io/part-of: mela
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: pg-dump
+              image: postgres:17-alpine
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  f=/backups/mela-$(date +%Y%m%d-%H%M).sql.gz
+                  pg_dump -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" | gzip > "$f"
+                  find /backups -name 'mela-*.sql.gz' -mtime +14 -delete
+                  ls -lh /backups
+              env:
+                - name: POSTGRES_HOST
+                  valueFrom: { configMapKeyRef: { name: mela-config, key: POSTGRES_HOST } }
+                - name: POSTGRES_DB
+                  valueFrom: { configMapKeyRef: { name: mela-config, key: POSTGRES_DB } }
+                - name: POSTGRES_USER
+                  valueFrom: { configMapKeyRef: { name: mela-config, key: POSTGRES_USER } }
+                - name: PGPASSWORD
+                  valueFrom: { secretKeyRef: { name: mela-secrets, key: POSTGRES_PASSWORD } }
+              volumeMounts:
+                - name: backups
+                  mountPath: /backups
+          volumes:
+            - name: backups
+              persistentVolumeClaim:
+                claimName: mela-backups

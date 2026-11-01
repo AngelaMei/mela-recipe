@@ -1,0 +1,25 @@
+:root {
+  --font-en: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-zh: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", var(--font-en);
+  --font-ui: var(--font-en);
+
+  --text-display: 1.9375rem;   /* 31 */
+  --text-title: 1.6875rem;     /* 27 */
+  --text-heading: 1.125rem;    /* 18 */
+  --text-list: 1rem;           /* 16 */
+  --text-para: 0.9375rem;      /* 15 */
+  --text-caption: 0.8125rem;   /* 13 */
+  --text-overline: 0.8125rem;  /* 13 */
+  --text-nav: 0.71875rem;      /* 11.5 — the minimum, nav labels only */
+
+  --leading-display: 1.1;
+  --leading-title: 1.15;
+  --leading-body: 1.45;
+  --tracking-display: -0.025em;
+  --tracking-overline: 0.06em;
+}
+
+html[lang="zh-Hant"] {
+  --font-ui: var(--font-zh);
+  --text-heading: 1.0625rem;   /* 17 */
+}

@@ -1,0 +1,49 @@
+:root {
+  /* 4px base */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --gutter: 22px;
+  --row-pad-y: 13px;
+  --row-min: 44px;
+  --section-gap: 24px;
+
+  /* Radii */
+  --radius-highlight: 3px;
+  --radius-checkbox: 6px;
+  --radius-chip: 9px;
+  --radius-field: 12px;
+  --radius-group: 14px;
+  --radius-button: 14px;
+  --radius-sheet: 24px;
+  --radius-pill: 999px;
+
+  /* Shadows — only floating things cast them */
+  --shadow-float: 0 10px 28px rgba(42, 34, 28, 0.22), 0 2px 6px rgba(42, 34, 28, 0.12);
+  --shadow-fab: 0 10px 22px rgba(173, 78, 52, 0.34), 0 2px 5px rgba(173, 78, 52, 0.2);
+  --shadow-seg: 0 1px 3px rgba(42, 34, 28, 0.14), 0 1px 1px rgba(42, 34, 28, 0.06);
+  --shadow-plate: 0 7px 16px rgba(70, 46, 22, 0.18), 0 1px 3px rgba(70, 46, 22, 0.14);
+
+  /* Layout */
+  --app-max: 430px;
+  --status-bar: max(env(safe-area-inset-top, 0px), 18px);
+  --nav-offset: calc(26px + env(safe-area-inset-bottom, 0px));
+  --cta-offset: calc(26px + env(safe-area-inset-bottom, 0px));
+  --content-bottom-pad: calc(112px + env(safe-area-inset-bottom, 0px));
+
+  /* Plates */
+  --plate-home: 102px;
+  --plate-hero: 200px;
+  --plate-row: 64px;
+}
+
+[data-theme="dark"] {
+  --shadow-float: 0 10px 28px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --shadow-fab: 0 10px 22px rgba(0, 0, 0, 0.45), 0 2px 5px rgba(0, 0, 0, 0.3);
+  --shadow-seg: 0 1px 3px rgba(0, 0, 0, 0.45);
+  --shadow-plate: 0 8px 18px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+}

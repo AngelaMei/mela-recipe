@@ -1,0 +1,30 @@
+/* CSS glazes are placeholders until the designer delivers plate images
+   (see public/plates/plates.json). Each plate has a rim glaze and a well tone. */
+:root {
+  --glaze-celadon: radial-gradient(circle at 35% 30%, #d9e6d6 0%, #b6cdb5 55%, #9bb79c 100%);
+  --well-celadon: #cddcc9;
+
+  --glaze-cobalt: repeating-conic-gradient(from 8deg, #f3f1ea 0deg 10deg, #e9e7df 10deg 20deg),
+    radial-gradient(circle, transparent 60%, #2f4f8a 61%, #2f4f8a 64%, transparent 65%);
+  --well-cobalt: #f4f2ec;
+
+  --glaze-ochre: radial-gradient(circle at 35% 30%, #e9c98b 0%, #d4a554 60%, #b98a3d 100%);
+  --well-ochre: #efd9ab;
+
+  --glaze-speckle: radial-gradient(circle at 20% 30%, rgba(90, 70, 50, 0.35) 0 1px, transparent 1.5px) 0 0 / 9px 9px,
+    radial-gradient(circle at 70% 60%, rgba(90, 70, 50, 0.28) 0 1px, transparent 1.5px) 0 0 / 13px 13px,
+    radial-gradient(circle at 35% 30%, #f7f1e6 0%, #e9dfcd 100%);
+  --well-speckle: #f6efe2;
+
+  --glaze-tenmoku: radial-gradient(circle at 35% 28%, #7a4a2b 0%, #4a2a18 55%, #2a1810 100%);
+  --well-tenmoku: #5c3822;
+
+  --glaze-slate: radial-gradient(circle at 35% 30%, #8e959a 0%, #6b737a 60%, #555c62 100%);
+  --well-slate: #7d858b;
+
+  --glaze-blush: radial-gradient(circle at 35% 30%, #f3d8cc 0%, #e4b8a6 60%, #d39f8b 100%);
+  --well-blush: #f1d5c9;
+
+  --glaze-ash: radial-gradient(circle at 35% 30%, #ece8e1 0%, #d3cdc2 60%, #bdb5a8 100%);
+  --well-ash: #e6e1d8;
+}

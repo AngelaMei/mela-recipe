@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+backend/.env
+
+# Node
+web/node_modules/
+web/.next/
+web/next-env.d.ts
+web/tsconfig.tsbuildinfo
+
+# Deploy
+deploy/k8s/overlays/prod/secrets.env
+.build/
+
+.DS_Store

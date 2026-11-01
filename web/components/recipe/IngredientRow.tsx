@@ -12,7 +12,8 @@ export interface IngredientRowProps {
 
 export function IngredientRow({ ingredient, have, onToggle }: IngredientRowProps) {
   const qty = ingredientQty(ingredient);
-  const note = ingredient.qty && ingredient.note ? ingredient.note : null;
+  // Older recipes have no portion; their prep note ("chopped") shows under the name.
+  const note = ingredient.portion === undefined && ingredient.qty && ingredient.note ? ingredient.note : null;
   const content = (
     <>
       {onToggle && <Checkbox checked={!!have} />}

@@ -11,7 +11,6 @@ import { Tabs } from "@/components/navigation/Tabs";
 import { LogForm } from "@/components/recipe/LogForm";
 import { IngredientRow } from "@/components/recipe/IngredientRow";
 import { LogEntry } from "@/components/recipe/LogEntry";
-import { PastePreviewSheet } from "@/components/recipe/PasteTextSheet";
 import { Plate } from "@/components/recipe/Plate";
 import { PlatePicker } from "@/components/recipe/PlatePicker";
 import { StepRow } from "@/components/recipe/StepRow";
@@ -36,7 +35,6 @@ export function RecipeScreen({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [logOpen, setLogOpen] = useState<{ log: CookLog | null } | null>(null);
-  const [pasteOpen, setPasteOpen] = useState(false);
 
   useEffect(() => {
     setAdded(false);
@@ -186,8 +184,8 @@ export function RecipeScreen({ id }: { id: string }) {
               <strong style={{ color: "var(--text-primary)" }}>{t.linkOnlyTitle}</strong>
               <div className="muted">{t.linkOnlyBody}</div>
               <div className="notice__actions">
-                <Button size="sm" variant="secondary" icon="content_paste" onClick={() => setPasteOpen(true)}>
-                  {t.pasteText}
+                <Button size="sm" variant="secondary" icon="add" onClick={() => router.push(`/recipes/${recipe.id}/edit`)}>
+                  {t.addIngredientsAndSteps}
                 </Button>
                 {recipe.source_url && (
                   <Button size="sm" variant="secondary" icon="open_in_new" onClick={() => window.open(recipe.source_url!, "_blank", "noopener")}>
@@ -256,9 +254,14 @@ export function RecipeScreen({ id }: { id: string }) {
           </>
         )}
 
-        <button type="button" className="danger-link" onClick={remove}>
-          {t.deleteRecipe}
-        </button>
+        <div className="detail__actions">
+          <Button size="sm" variant="secondary" icon="edit" onClick={() => router.push(`/recipes/${recipe.id}/edit`)}>
+            {t.editRecipe}
+          </Button>
+          <button type="button" className="danger-link" onClick={remove}>
+            {t.deleteRecipe}
+          </button>
+        </div>
       </div>
 
       {cta && <div className="sticky-cta">{cta}</div>}
@@ -279,15 +282,6 @@ export function RecipeScreen({ id }: { id: string }) {
           setLogOpen(null);
           await mutate();
           refreshLists();
-        }}
-      />
-      <PastePreviewSheet
-        open={pasteOpen}
-        onClose={() => setPasteOpen(false)}
-        onSave={async (ingredients, steps) => {
-          await mutate(api.patch<Recipe>(`/api/recipes/${recipe.id}`, { ingredients, steps }), { revalidate: false });
-          refreshLists();
-          setPasteOpen(false);
         }}
       />
     </main>

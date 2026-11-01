@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date
 
 from .models import CookLog, Recipe
+from .services.lines import portion_text
 
 
 def photo_url(photo_id) -> str | None:
@@ -48,7 +49,10 @@ def recipe_out(recipe: Recipe, *, with_logs: bool = False, matched: int | None =
         "source": recipe.source,
         "source_url": recipe.source_url,
         "note": recipe.note,
-        "ingredients": recipe.ingredients or [],
+        "ingredients": [
+            i if "portion" in i else {**i, "portion": portion_text(i.get("qty"), i.get("unit"), i.get("note"))}
+            for i in (recipe.ingredients or [])
+        ],
         "steps": recipe.steps or [],
         "plate_id": recipe.plate_id,
         "created_by": recipe.created_by,

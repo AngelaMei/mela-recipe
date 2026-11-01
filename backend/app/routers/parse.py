@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends
 
 from ..auth import current_member
-from ..schemas import ParseIn
+from ..schemas import LinesIn, ParseIn
+from ..services.lines import parse_lines, portion_text
 from ..services import youtube
 from ..services.parsing import SplitOptions, detect_source, parse_recipe
 
@@ -41,7 +42,11 @@ def parse(body: ParseIn):
         status = "link_only"
 
     parsed = parse_recipe(content, opts) if content else None
-    ingredients = [i.to_dict() for i in parsed.ingredients] if parsed else []
+    ingredients = (
+        [{**i.to_dict(), "portion": portion_text(i.qty, i.unit, i.note)} for i in parsed.ingredients]
+        if parsed
+        else []
+    )
     steps = parsed.steps if parsed else []
     if status == "ok" and not ingredients and not steps:
         status = "empty"
@@ -52,3 +57,9 @@ def parse(body: ParseIn):
         "ingredients": ingredients,
         "steps": steps,
     }
+
+
+@router.post("/parse/lines")
+def parse_ingredient_lines(body: LinesIn):
+    """The ingredient box: one ingredient per line -> name + portion, for the live preview."""
+    return {"ingredients": [i.to_dict() for i in parse_lines(body.text)]}

@@ -114,3 +114,22 @@ def test_empty_passcode_never_logs_in(db, monkeypatch):
     monkeypatch.setattr(get_settings(), "mela_passcode", "")
     c = TestClient(app)
     assert c.post("/api/auth/login", json={"member": "Mei", "passcode": ""}).status_code == 401
+
+
+def test_structured_ingredients_keep_portion_as_typed(client):
+    r = client.post("/api/parse/lines", json={"text": "雞腿 300g\n大蒜 1瓣\n鹽 少許"}).json()
+    assert [(i["name"], i["portion"]) for i in r["ingredients"]] == [("雞腿", "300g"), ("大蒜", "1瓣"), ("鹽", "少許")]
+
+    rec = client.post("/api/recipes", json={
+        "name": "三杯雞",
+        "ingredients": [{"name": "雞腿", "portion": "300g"}, {"name": "大蒜", "portion": "1瓣（拍碎）"}, {"name": "九層塔"}],
+        "steps": ["雞腿切塊", "爆香大蒜"],
+    }).json()
+    ings = rec["ingredients"]
+    assert [(i["name"], i["portion"], i["amount"], i["unit"]) for i in ings] == [
+        ("雞腿", "300g", 300, "g"), ("大蒜", "1瓣（拍碎）", 1, "瓣"), ("九層塔", None, None, None),
+    ]
+    g = client.post("/api/grocery/from-recipe", json={"recipe_id": rec["id"], "indices": [0]}).json()
+    assert g["open"][0]["qty"] == "300" and g["open"][0]["unit"] == "g"
+    g = client.post("/api/grocery", json={"text": "雞腿 200g"}).json()
+    assert len(g["open"]) == 1 and g["open"][0]["qty"] == "500"

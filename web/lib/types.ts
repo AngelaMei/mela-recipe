@@ -2,6 +2,8 @@ export type Source = "youtube" | "instagram" | "link" | "manual";
 
 export interface Ingredient {
   name: string;
+  /** The amount exactly as typed: "300g", "1瓣", "少許". */
+  portion: string | null;
   amount: number | null;
   qty: string | null;
   unit: string | null;

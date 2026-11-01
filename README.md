@@ -20,7 +20,12 @@ namespace: mela  CronJob mela-backup: nightly pg_dump to its own PVC, 14 days ke
 ```
 
 - **Same origin.** The browser only talks to one host, so the session cookie needs no CORS setup. If you'd rather not split paths at the Ingress, the web container also proxies `/api` to `http://mela-api:8000`.
-- **Parsing, merging and search live only in the backend** (`backend/app/services/`). The Add screen calls `POST /api/parse` (debounced) for its live preview, so the rules exist once and are unit-tested in Python. They follow the README's interaction specs (source detection, `parseRecipe`, `splitSteps`, grocery keys, aliases and units, `searchRecipes`).
+- **Adding a recipe is structured, not guessed.** Ingredients and steps each have two ways in, switchable at any time without losing anything:
+  - *Type a list*: a big box, one ingredient (or step) per line. Each ingredient line is split into **name + amount** by `POST /api/parse/lines` (`backend/app/services/lines.py`) and previewed live, so you see the split before saving. Steps are one per line, never split on commas, and a leading `1.` is removed.
+  - *One by one*: a row per item with a separate name and amount field and an "Add ingredient" / "Add step" button. Nothing is guessed.
+
+  The amount is stored **exactly as typed** (`300g`, `1瓣（拍碎）`, `少許`) and shown that way. The server also reads a number and unit from it (`1大匙 + 1小匙` → 4 tsp) only so the grocery list can merge amounts. The same editor edits existing recipes (`/recipes/[id]/edit`).
+- **Imports.** A YouTube link offers "Import from the video description", which fills the boxes for review using the older free-text heuristics in `parsing.py`. Grocery keys, aliases, units and search are in `normalize.py` / `search.py`, all unit-tested in Python.
 - **Sync between the two phones.** Postgres is the source of truth. The grocery list polls every 4s while open; other screens revalidate on focus. Concurrent adds of the same ingredient are serialised with a Postgres advisory lock, so they merge instead of duplicating.
 - **Auth.** Pick who you are, then enter a shared kitchen passcode. This sets a signed, HTTP-only cookie that lasts a year. Members are configured in `MELA_MEMBERS`, and the names drive "Added by Paul" and "shared with Paul".
 - **Photos.** Resized on the phone to at most 1280px JPEG, then stored in Postgres (`photos` table). That keeps it to one stateful component to back up.
@@ -100,4 +105,4 @@ API docs are at `/api/docs`.
 - Components: `web/components/{core,forms,navigation,recipe,overlays}`, with the same names as the design (Icon, Button, IconButton, Badge, Chip, TextField, Checkbox, SegmentedControl, BottomNav, Tabs, TopBar, Plate, RecipeTile, IngredientRow, StepRow, GroceryItem, LogEntry, SearchResult, Sheet).
 - Copy: every string, in English and 繁體中文, is in `web/lib/i18n.ts`. The language and theme are stored per device in localStorage.
 - Plates: CSS glazes in `styles/tokens/plates.css` are placeholders. When the designer delivers plate images, drop them in `web/public/plates/` and list them in `plates.json`.
-- Things the design hadn't drawn, and how they're built here: the log form (date, rating, note, tweaks, photo; tap a log to edit or delete it), the login screen, and a quiet "Delete recipe" link.
+- Things the design hadn't drawn, and how they're built here: the log form (date, rating, note, tweaks, photo; tap a log to edit or delete it), the login screen, the recipe editor (replaces the single "paste anything" field from the design), and "Edit recipe" / "Delete recipe" on the detail page. Extra icons used: `edit`, `close`.

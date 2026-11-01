@@ -12,6 +12,7 @@ from ..models import CookLog, Photo, Recipe
 from ..schemas import LogIn, LogPatch, RecipeIn, RecipePatch
 from ..serialize import log_out, recipe_out, recipe_stats
 from ..services import search as search_service
+from ..services.lines import normalize_ingredient
 
 router = APIRouter(prefix="/api", tags=["recipes"])
 
@@ -41,6 +42,14 @@ def _photo_id(db: Session, value: str | None) -> uuid.UUID | None:
     if not db.get(Photo, pid):
         raise HTTPException(422, "Photo not found")
     return pid
+
+
+def _ingredients(items) -> list[dict]:
+    return [
+        normalize_ingredient(i.model_dump(), "portion" in i.model_fields_set)
+        for i in items
+        if i.name.strip()
+    ]
 
 
 def _clean(value: str | None) -> str | None:
@@ -93,7 +102,7 @@ def create_recipe(body: RecipeIn, db: Session = Depends(get_db), member: str = D
         source=body.source,
         source_url=_clean(body.source_url),
         note=_clean(body.note),
-        ingredients=[i.model_dump() for i in body.ingredients],
+        ingredients=_ingredients(body.ingredients),
         steps=[s.strip() for s in body.steps if s.strip()],
         created_by=member,
     )
@@ -117,10 +126,14 @@ def update_recipe(recipe_id: str, body: RecipePatch, db: Session = Depends(get_d
         recipe.name_alt = _clean(data["name_alt"])
     if "note" in data:
         recipe.note = _clean(data["note"])
+    if data.get("source"):
+        recipe.source = data["source"]
+    if "source_url" in data:
+        recipe.source_url = _clean(data["source_url"])
     if "plate_id" in data:
         recipe.plate_id = data["plate_id"]
     if body.ingredients is not None:
-        recipe.ingredients = [i.model_dump() for i in body.ingredients]
+        recipe.ingredients = _ingredients(body.ingredients)
     if body.steps is not None:
         recipe.steps = [s.strip() for s in body.steps if s.strip()]
     db.commit()

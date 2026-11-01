@@ -3,6 +3,7 @@ import type { GroceryItem, Ingredient, Recipe } from "./types";
 
 /** "2 cloves", "3瓣", "適量" */
 export function ingredientQty(ing: Ingredient): string {
+  if (ing.portion !== undefined) return ing.portion ?? "";
   const parts: string[] = [];
   if (ing.qty) parts.push(ing.qty);
   if (ing.unit) {

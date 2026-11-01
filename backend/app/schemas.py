@@ -8,6 +8,9 @@ from pydantic import BaseModel, Field
 
 class IngredientIn(BaseModel):
     name: str = Field(min_length=1, max_length=200)
+    # The amount exactly as typed ("300g", "1瓣", "少許"). When given, the server
+    # reads amount/qty/unit from it and the fields below are ignored.
+    portion: str | None = Field(default=None, max_length=80)
     amount: float | None = None
     qty: str | None = Field(default=None, max_length=40)
     unit: str | None = Field(default=None, max_length=32)
@@ -27,6 +30,10 @@ class ParseIn(BaseModel):
     split: SplitIn = SplitIn()
 
 
+class LinesIn(BaseModel):
+    text: str = Field(default="", max_length=50_000)
+
+
 class RecipeIn(BaseModel):
     name: str | None = Field(default=None, max_length=200)
     name_alt: str | None = Field(default=None, max_length=200)
@@ -39,6 +46,8 @@ class RecipeIn(BaseModel):
 
 class RecipePatch(BaseModel):
     name: str | None = Field(default=None, max_length=200)
+    source: Literal["youtube", "instagram", "link", "manual"] | None = None
+    source_url: str | None = Field(default=None, max_length=2000)
     name_alt: str | None = Field(default=None, max_length=200)
     note: str | None = Field(default=None, max_length=2000)
     plate_id: str | None = Field(default=None, max_length=32)

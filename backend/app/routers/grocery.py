@@ -10,7 +10,7 @@ from ..db import get_db
 from ..models import GroceryItem, Recipe
 from ..schemas import GroceryAddIn, GroceryFromRecipeIn, GroceryPatch
 from ..services.grocery import add_to_grocery, item_out
-from ..services.parsing import parse_ingredient
+from ..services.lines import parse_line
 
 router = APIRouter(prefix="/api/grocery", tags=["grocery"])
 
@@ -29,8 +29,8 @@ def list_items(db: Session = Depends(get_db), member: str = Depends(current_memb
 
 @router.post("", status_code=201)
 def add_item(body: GroceryAddIn, db: Session = Depends(get_db), member: str = Depends(current_member)):
-    ing = parse_ingredient(body.text)  # "2 onions" -> qty 2
-    if not ing.name:
+    ing = parse_line(body.text)  # "2 onions" / "雞腿 300g"
+    if not ing or not ing.name:
         raise HTTPException(422, "Nothing to add")
     add_to_grocery(db, name=ing.name, amount=ing.amount, unit=ing.unit, by=member)
     db.commit()

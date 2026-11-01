@@ -243,6 +243,16 @@ html[lang="zh-Hant"] .overline {
   font-size: var(--text-caption);
   color: var(--text-secondary);
 }
+.detail__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 32px;
+}
+.detail__actions .danger-link {
+  margin-top: 0;
+}
 .danger-link {
   display: block;
   margin: 36px auto 0;
@@ -262,6 +272,104 @@ html[lang="zh-Hant"] .overline {
 }
 .split-label {
   margin-bottom: 8px;
+}
+
+/* Recipe editor */
+.editor-section {
+  padding-top: 8px;
+}
+.editor-section > * + * {
+  margin-top: 12px;
+}
+.editor-section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.editor-section__count {
+  font-size: var(--text-caption);
+}
+.editor-box textarea.field__input {
+  min-height: 150px;
+  line-height: 1.6;
+}
+.editor-preview {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.editor-preview__none {
+  color: var(--text-tertiary);
+  font-size: var(--text-caption);
+}
+.editor-preview__step {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 6px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--text-para);
+  color: var(--text-body);
+  line-height: 1.5;
+}
+.editor-preview__step:last-child {
+  border-bottom: 0;
+}
+.editor-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.editor-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.editor-input {
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 12px;
+  border-radius: var(--radius-field);
+  border: 1px solid var(--line);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-size: var(--text-list); /* 16px: no zoom on iOS */
+  transition: border-color var(--dur-change) var(--ease-out);
+}
+.editor-input::placeholder {
+  color: var(--text-tertiary);
+}
+.editor-input:focus {
+  outline: none;
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 0.5px var(--text-primary);
+}
+.editor-input--name {
+  flex: 1.35 1 0;
+}
+.editor-input--portion {
+  flex: 1 1 0;
+}
+textarea.editor-input--step {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  resize: none;
+  line-height: 1.45;
+  overflow: hidden;
+}
+.editor-step {
+  display: grid;
+  grid-template-columns: 22px 1fr 42px;
+  gap: 6px;
+  align-items: start;
+}
+.editor-step__num {
+  padding-top: 13px;
+}
+.editor-step .icon-btn {
+  margin-top: 3px;
 }
 
 /* Plate picker */

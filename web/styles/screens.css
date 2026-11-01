@@ -243,6 +243,15 @@ html[lang="zh-Hant"] .overline {
   font-size: var(--text-caption);
   color: var(--text-secondary);
 }
+.tab-hint--row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tab-hint--row .link {
+  font-size: var(--text-caption);
+}
 .detail__actions {
   display: flex;
   flex-direction: column;

@@ -30,7 +30,8 @@ export function RecipeScreen({ id }: { id: string }) {
   const { data: recipe, mutate, error } = useSWR<Recipe>(`/api/recipes/${id}`);
 
   const [tab, setTab] = useState<Tab>("ingredients");
-  const [have, setHave] = useState<Set<number>>(new Set());
+  // Ticked ingredients are the ones to buy.
+  const [toBuy, setToBuy] = useState<Set<number>>(new Set());
   const [added, setAdded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -38,7 +39,7 @@ export function RecipeScreen({ id }: { id: string }) {
 
   useEffect(() => {
     setAdded(false);
-  }, [have]);
+  }, [toBuy]);
 
   const refreshLists = () => globalMutate((k) => typeof k === "string" && (k.startsWith("/api/recipes") || k.startsWith("/api/search")));
 
@@ -54,20 +55,21 @@ export function RecipeScreen({ id }: { id: string }) {
   const made = recipe.made_count > 0;
   const linkOnly = recipe.ingredients.length === 0 && recipe.steps.length === 0;
   const logs = recipe.logs ?? [];
-  const missing = recipe.ingredients.map((_, i) => i).filter((i) => !have.has(i));
+  const selected = recipe.ingredients.map((_, i) => i).filter((i) => toBuy.has(i));
+  const allSelected = recipe.ingredients.length > 0 && selected.length === recipe.ingredients.length;
 
-  const toggleHave = (i: number) =>
-    setHave((prev) => {
+  const toggleToBuy = (i: number) =>
+    setToBuy((prev) => {
       const next = new Set(prev);
       if (next.has(i)) next.delete(i);
       else next.add(i);
       return next;
     });
 
-  const addMissing = async () => {
+  const addSelected = async () => {
     setBusy(true);
     try {
-      await api.post("/api/grocery/from-recipe", { recipe_id: recipe.id, indices: missing });
+      await api.post("/api/grocery/from-recipe", { recipe_id: recipe.id, indices: selected });
       await globalMutate("/api/grocery");
       setAdded(true);
     } finally {
@@ -115,14 +117,12 @@ export function RecipeScreen({ id }: { id: string }) {
   // Sticky CTA per tab
   let cta: React.ReactNode = null;
   if (tab === "ingredients" && recipe.ingredients.length > 0) {
-    if (missing.length === 0) {
-      cta = <Button variant="primary" block done disabled>{t.haveEverything}</Button>;
-    } else if (added) {
+    if (added) {
       cta = <Button variant="primary" block done disabled icon="check">{t.addedToGrocery}</Button>;
     } else {
       cta = (
-        <Button variant="primary" block onClick={addMissing} disabled={busy}>
-          {t.addMissing(missing.length)}
+        <Button variant="primary" block onClick={addSelected} disabled={busy || selected.length === 0}>
+          {selected.length ? t.addToGrocery(selected.length) : t.tickToAdd}
         </Button>
       );
     }
@@ -212,10 +212,19 @@ export function RecipeScreen({ id }: { id: string }) {
               {tab === "ingredients" &&
                 (recipe.ingredients.length ? (
                   <>
-                    <p className="tab-hint">{t.tickHave}</p>
+                    <div className="tab-hint tab-hint--row">
+                      <span>{t.tickToBuy}</span>
+                      <button
+                        type="button"
+                        className="link"
+                        onClick={() => setToBuy(allSelected ? new Set() : new Set(recipe.ingredients.map((_, i) => i)))}
+                      >
+                        {allSelected ? t.clearSelection : t.selectAll}
+                      </button>
+                    </div>
                     <ul className="list">
                       {recipe.ingredients.map((ing, i) => (
-                        <IngredientRow key={i} ingredient={ing} have={have.has(i)} onToggle={() => toggleHave(i)} />
+                        <IngredientRow key={i} ingredient={ing} selected={toBuy.has(i)} onToggle={() => toggleToBuy(i)} />
                       ))}
                     </ul>
                   </>

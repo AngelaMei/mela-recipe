@@ -5,18 +5,18 @@ import { Checkbox } from "../forms/Checkbox";
 
 export interface IngredientRowProps {
   ingredient: Ingredient;
-  /** When set, the row is a checkbox ("tick what we already have"). */
-  have?: boolean;
+  /** When onToggle is set, the row is a checkbox ("tick what to buy"). */
+  selected?: boolean;
   onToggle?: () => void;
 }
 
-export function IngredientRow({ ingredient, have, onToggle }: IngredientRowProps) {
+export function IngredientRow({ ingredient, selected, onToggle }: IngredientRowProps) {
   const qty = ingredientQty(ingredient);
   // Older recipes have no portion; their prep note ("chopped") shows under the name.
   const note = ingredient.portion === undefined && ingredient.qty && ingredient.note ? ingredient.note : null;
   const content = (
     <>
-      {onToggle && <Checkbox checked={!!have} />}
+      {onToggle && <Checkbox checked={!!selected} />}
       <span className="row__main">
         <span className="row__title">{ingredient.name}</span>
         {note && <span className="row__sub" style={{ display: "block" }}>{note}</span>}
@@ -30,8 +30,8 @@ export function IngredientRow({ ingredient, have, onToggle }: IngredientRowProps
       <button
         type="button"
         role="checkbox"
-        aria-checked={!!have}
-        className={`row ingredient-row${have ? " ingredient-row--have" : ""}`}
+        aria-checked={!!selected}
+        className="row ingredient-row"
         onClick={onToggle}
       >
         {content}

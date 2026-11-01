@@ -18,7 +18,7 @@ def test_auth_required(db):
     assert c.get("/api/recipes").status_code == 401
     assert c.post("/api/auth/login", json={"member": "Mei", "passcode": "nope"}).status_code == 401
     assert c.post("/api/auth/login", json={"member": "Eve", "passcode": "1234"}).status_code == 401
-    assert c.get("/api/auth/household").json()["members"][1] == {"name": "Paul", "name_zh": "保羅"}
+    assert c.get("/api/auth/household").json()["members"][1] == {"name": "Paul", "name_zh": "Paul"}
 
 
 def test_recipe_lifecycle_and_search(client):

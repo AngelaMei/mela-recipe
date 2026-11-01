@@ -591,9 +591,6 @@ textarea.field__input {
 }
 
 /* IngredientRow / GroceryItem ------------------------------------------ */
-.ingredient-row--have .row__title {
-  color: var(--text-secondary);
-}
 .grocery-item--checked .row__title,
 .grocery-item--checked .row__end {
   text-decoration: line-through;

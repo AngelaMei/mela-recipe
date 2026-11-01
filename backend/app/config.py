@@ -16,8 +16,8 @@ class Settings(BaseSettings):
 
     # Household. MELA_MEMBERS is "English name|中文名稱" pairs separated by commas.
     mela_household: str = "Mei & Paul"
-    mela_household_zh: str = "Mei 與保羅"
-    mela_members: str = "Mei|Mei,Paul|保羅"
+    mela_household_zh: str = "Mei 與 Paul"
+    mela_members: str = "Mei,Paul"
     mela_passcode: str = "change-me"
 
     session_secret: str = "dev-only-secret-change-me"

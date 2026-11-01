@@ -8,7 +8,7 @@ data:
   POSTGRES_DB: mela
   POSTGRES_USER: mela
   MELA_HOUSEHOLD: "Mei & Paul"
-  MELA_HOUSEHOLD_ZH: "Mei 與保羅"
-  # "English name|中文名稱" pairs
-  MELA_MEMBERS: "Mei|Mei,Paul|保羅"
+  MELA_HOUSEHOLD_ZH: "Mei 與 Paul"
+  # Comma-separated. Add "|中文名稱" after a name to show a different name in Chinese.
+  MELA_MEMBERS: "Mei,Paul"
   COOKIE_SECURE: "true"

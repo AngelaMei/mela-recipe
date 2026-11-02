@@ -7,13 +7,13 @@ The design spec is in [`docs/design.md`](docs/design.md).
 ```
 web/       Next.js 15 (App Router) PWA, plain CSS with design tokens
 backend/   FastAPI + SQLAlchemy + Alembic. Parsing, grocery merging and search live here
-deploy/    Kubernetes manifests (kustomize) for the `mela` namespace
+deploy/    Helm chart and deploy script for the `mela` namespace
 ```
 
 ## Architecture
 
 ```
-                 Ingress (mela.example.com)
+                 Traefik Ingress (mela.meiyuchi.com)
                  ├── /api/*  → mela-api  (FastAPI, :8000) ──→ mela-postgres (StatefulSet, PVC 5Gi)
                  └── /*      → mela-web  (Next.js standalone, :3000)
 namespace: mela  CronJob mela-backup: nightly pg_dump to its own PVC, 14 days kept
@@ -34,42 +34,72 @@ namespace: mela  CronJob mela-backup: nightly pg_dump to its own PVC, 14 days ke
 
 ## Deploy to your cluster
 
-Prerequisites: `kubectl` pointed at the cluster, a container registry the cluster can pull from, and an ingress controller. The manifests assume `ingressClassName: nginx` and cert-manager with a `letsencrypt` ClusterIssuer; change those in the overlay if yours differ.
+Mela is deployed with the Helm chart in `deploy/helm/mela`, through `deploy/deploy.sh`.
 
-1. **Secrets.** Copy `deploy/k8s/overlays/prod/secrets.env.example` to `secrets.env` (git-ignored) and fill it in:
+```
+                 Traefik Ingress  https://mela.meiyuchi.com   (cert-manager, ClusterIssuer "letsencrypt")
+                 ├── /api/*  → mela-api  (FastAPI :8000, migrate init container) ──→ mela-postgres (StatefulSet, 5Gi PVC)
+                 └── /*      → mela-web  (Next.js :3000)
+namespace: mela  CronJob mela-backup: nightly pg_dump to its own PVC, 14 days kept
+```
+
+You need `git`, `docker` (with buildx), `kubectl` pointed at the cluster, `helm` 3, and a registry the cluster can pull from.
+
+**One-time setup**
+
+1. Registry: copy `deploy/deploy.env.example` to `deploy/deploy.env` and set `REGISTRY`, e.g. `ghcr.io/meiyuchi`. Run `docker login` for that registry.
    ```bash
-   cp deploy/k8s/overlays/prod/secrets.env.example deploy/k8s/overlays/prod/secrets.env
+   cp deploy/deploy.env.example deploy/deploy.env
+   ```
+2. Secrets: copy `deploy/secrets.env.example` to `deploy/secrets.env` and fill it in. The script writes it to the Kubernetes Secret `mela-secrets`; Helm never sees it.
+   ```bash
+   cp deploy/secrets.env.example deploy/secrets.env
    ```
    ```bash
-   openssl rand -base64 32   # use for POSTGRES_PASSWORD and SESSION_SECRET
+   openssl rand -base64 32   # for POSTGRES_PASSWORD and SESSION_SECRET
    ```
-2. **Hostname.** In `deploy/k8s/overlays/prod/kustomization.yaml`, replace `mela.example.com` (twice) and the cert-manager issuer.
-3. **Household.** Names live in `deploy/k8s/base/config.yaml` (`MELA_HOUSEHOLD`, `MELA_HOUSEHOLD_ZH`, `MELA_MEMBERS`).
-4. **Build, push and deploy:**
+3. Check the cert-manager issuer name matches `ingress.clusterIssuer` (default `letsencrypt`):
    ```bash
-   make images REGISTRY=<your-registry>/mela TAG=0.1.0
+   kubectl get clusterissuer
    ```
-   ```bash
-   make deploy REGISTRY=<your-registry>/mela TAG=0.1.0
-   ```
-   `make deploy` applies the prod overlay with your image names swapped in, then waits for Postgres, the API and the web app. The API pod's `migrate` init container waits for Postgres and runs `alembic upgrade head` on every rollout.
+   If yours is named differently, or you want other household names or a storage class, copy `deploy/values.local.yaml.example` to `deploy/values.local.yaml` and override them there.
+4. Point DNS for `mela.meiyuchi.com` at Traefik's address.
 
-If your registry is private, add an `imagePullSecret` to the two Deployments, or attach it to the `default` ServiceAccount in `mela`.
+**Deploy**
 
-**Backups.** There are two:
-- In the app, *Settings › Backup › Export recipes* downloads `mela-backup-YYYY-MM-DD.zip` with:
-  - `mela-backup.json`: every recipe, cook log (including photo framing) and grocery item, machine-readable;
-  - `recipes.md`: the recipes as readable text;
-  - `photos/`: every cook-log photo.
-- The cluster runs a nightly `pg_dump` (below).
+```bash
+deploy/deploy.sh
+```
 
-Day-two commands: `make status`, `make logs`, `make psql`, `make backup-now`. To restore a backup:
+This builds `mela-api` and `mela-web` from the current git `HEAD` (tagged with the short commit hash, plus `-dirty-<time>` if there are uncommitted changes), pushes them, updates the Secret, and runs `helm upgrade --install` with `--wait`. The API's `migrate` init container applies database migrations on every rollout.
+
+Other options:
+
+```bash
+deploy/deploy.sh --skip-build   # images for this commit are already pushed
+```
+```bash
+deploy/deploy.sh --tag 1a2b3c4d5e6f   # roll out (or roll back to) a specific build
+```
+```bash
+deploy/deploy.sh --dry-run   # print the rendered manifests, change nothing
+```
+
+Rolling back also works with Helm's own history (`helm -n mela history mela`, then `helm -n mela rollback mela <revision>`).
+
+If the cluster nodes are ARM, set `PLATFORM=linux/arm64` in `deploy/deploy.env`. If the registry is private, create a pull secret in `mela` and list it under `imagePullSecrets` in `values.local.yaml`.
+
+*From the earlier kubectl/kustomize manifests:* the first `deploy.sh` run hands the existing resources over to Helm. Names and selectors are unchanged, so Postgres keeps its volume and data. The old hashed `mela-secrets-xxxxx` Secret can be deleted afterwards.
+
+**Day to day**
+
+`make status`, `make logs`, `make psql` and `make backup-now`. To restore a nightly backup:
 
 ```bash
 kubectl -n mela exec -i statefulset/mela-postgres -- sh -c 'psql -U "$POSTGRES_USER" "$POSTGRES_DB"' < <(gunzip -c mela-YYYYMMDD-HHMM.sql.gz)
 ```
 
-The backups sit on a PVC in the same cluster. Copy them off-cluster too if your volumes aren't backed up.
+The nightly backups sit on a PVC in the same cluster, so copy them off-cluster too if your volumes aren't backed up. Settings › Backup in the app also downloads everything (recipes, cook logs, photos) as a .zip.
 
 ## Local development
 

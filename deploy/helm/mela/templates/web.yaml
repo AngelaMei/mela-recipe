@@ -4,6 +4,7 @@ metadata:
   name: mela-web
   labels:
     app.kubernetes.io/name: mela-web
+    {{- include "mela.labels" . | nindent 4 }}
 spec:
   selector:
     app.kubernetes.io/name: mela-web
@@ -18,8 +19,9 @@ metadata:
   name: mela-web
   labels:
     app.kubernetes.io/name: mela-web
+    {{- include "mela.labels" . | nindent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.web.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: mela-web
@@ -29,12 +31,14 @@ spec:
         app.kubernetes.io/name: mela-web
         app.kubernetes.io/part-of: mela
     spec:
+      {{- include "mela.pullSecrets" . | nindent 6 }}
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
       containers:
         - name: web
-          image: mela-web
+          image: {{ include "mela.image" (list . .Values.image.web) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
               containerPort: 3000
@@ -46,8 +50,7 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 20
           resources:
-            requests: { cpu: 50m, memory: 128Mi }
-            limits: { memory: 384Mi }
+            {{- toYaml .Values.web.resources | nindent 12 }}
           securityContext:
             allowPrivilegeEscalation: false
             capabilities: { drop: ["ALL"] }

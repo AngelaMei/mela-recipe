@@ -1,0 +1,11 @@
+# Optional overrides. Copy to deploy/values.local.yaml (git-ignored).
+# host: mela.meiyuchi.com
+# ingress:
+#   clusterIssuer: letsencrypt-prod
+# household:
+#   name: "Mei & Paul"
+#   nameZh: "Mei 與 Paul"
+#   members: "Mei,Paul"
+# postgres:
+#   storageClass: local-path
+# imagePullSecrets: [regcred]

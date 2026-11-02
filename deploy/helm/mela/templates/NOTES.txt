@@ -1,0 +1,7 @@
+Mela {{ .Values.image.tag }} is rolling out in namespace {{ .Release.Namespace }}.
+
+  https://{{ .Values.host }}
+
+Certificate: kubectl -n {{ .Release.Namespace }} get certificate {{ .Values.ingress.tlsSecretName }}
+Pods:        kubectl -n {{ .Release.Namespace }} get pods
+API logs:    kubectl -n {{ .Release.Namespace }} logs deploy/mela-api --all-containers

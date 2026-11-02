@@ -1,9 +1,11 @@
+{{- if .Values.networkPolicy.enabled }}
 # Only the API (and the backup job) may talk to Postgres.
-# Ignored if your CNI doesn't enforce NetworkPolicy.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: mela-postgres
+  labels:
+    {{- include "mela.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels:
@@ -19,3 +21,4 @@ spec:
               app.kubernetes.io/name: mela-backup
       ports:
         - port: 5432
+{{- end }}

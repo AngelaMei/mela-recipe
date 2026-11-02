@@ -1,0 +1,55 @@
+{{- if .Values.ingress.enabled }}
+{{- $crd := "" }}
+{{- if .Capabilities.APIVersions.Has "traefik.io/v1alpha1/Middleware" }}
+{{- $crd = "traefik.io/v1alpha1" }}
+{{- else if .Capabilities.APIVersions.Has "traefik.containo.us/v1alpha1/Middleware" }}
+{{- $crd = "traefik.containo.us/v1alpha1" }}
+{{- end }}
+{{- $redirect := and .Values.ingress.redirectToHttps $crd }}
+{{- if $redirect }}
+# http:// -> https:// (Traefik leaves requests that are already https alone)
+apiVersion: {{ $crd }}
+kind: Middleware
+metadata:
+  name: mela-https-redirect
+  labels:
+    {{- include "mela.labels" . | nindent 4 }}
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+{{- end }}
+# /api -> FastAPI, everything else -> Next.js. Same origin, so the session cookie just works.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mela
+  labels:
+    {{- include "mela.labels" . | nindent 4 }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.clusterIssuer | quote }}
+    {{- if $redirect }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ printf "%s-mela-https-redirect@kubernetescrd" .Release.Namespace }}
+    {{- end }}
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  tls:
+    - hosts: [{{ .Values.host | quote }}]
+      secretName: {{ .Values.ingress.tlsSecretName }}
+  rules:
+    - host: {{ .Values.host | quote }}
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service: { name: mela-api, port: { name: http } }
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: mela-web, port: { name: http } }
+{{- end }}

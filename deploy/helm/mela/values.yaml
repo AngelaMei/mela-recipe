@@ -1,0 +1,66 @@
+# Mela Helm chart. deploy/deploy.sh sets image.registry and image.tag for you.
+
+image:
+  # e.g. ghcr.io/meiyuchi or registry.example.com/mela (set in deploy/deploy.env)
+  registry: ""
+  api: mela-api
+  web: mela-web
+  # Defaults to the git commit the images were built from (deploy.sh).
+  tag: ""
+  pullPolicy: IfNotPresent
+
+# Names of existing image pull secrets in the namespace, if the registry is private.
+imagePullSecrets: []
+
+host: mela.meiyuchi.com
+
+ingress:
+  enabled: true
+  className: traefik
+  # cert-manager ClusterIssuer. Check yours with: kubectl get clusterissuer
+  clusterIssuer: letsencrypt
+  tlsSecretName: mela-tls
+  # Redirect http:// to https:// with a Traefik Middleware (skipped if the Traefik CRDs aren't installed).
+  redirectToHttps: true
+  annotations: {}
+
+household:
+  name: "Mei & Paul"
+  nameZh: "Mei 與 Paul"
+  # Comma-separated. Add "|中文名稱" after a name to show a different name in Chinese.
+  members: "Mei,Paul"
+
+# Secret with POSTGRES_PASSWORD, MELA_PASSCODE, SESSION_SECRET and (optional) YOUTUBE_API_KEY.
+# deploy.sh creates it from deploy/secrets.env; Helm never stores these values.
+existingSecret: mela-secrets
+
+api:
+  replicas: 1
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 384Mi }
+
+web:
+  replicas: 1
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 384Mi }
+
+postgres:
+  image: postgres:17-alpine
+  storage: 5Gi
+  # Empty = the cluster's default StorageClass
+  storageClass: ""
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 512Mi }
+
+backup:
+  enabled: true
+  schedule: "17 3 * * *"
+  retentionDays: 14
+  storage: 5Gi
+  storageClass: ""
+
+networkPolicy:
+  enabled: true

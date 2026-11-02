@@ -4,6 +4,7 @@ metadata:
   name: mela-api
   labels:
     app.kubernetes.io/name: mela-api
+    {{- include "mela.labels" . | nindent 4 }}
 spec:
   selector:
     app.kubernetes.io/name: mela-api
@@ -18,8 +19,9 @@ metadata:
   name: mela-api
   labels:
     app.kubernetes.io/name: mela-api
+    {{- include "mela.labels" . | nindent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.api.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: mela-api
@@ -28,30 +30,36 @@ spec:
       labels:
         app.kubernetes.io/name: mela-api
         app.kubernetes.io/part-of: mela
+      annotations:
+        # Restart when the household config changes
+        checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
     spec:
+      {{- include "mela.pullSecrets" . | nindent 6 }}
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
       initContainers:
-        # Waits for Postgres, then applies migrations.
+        # Waits for Postgres, then applies database migrations.
         - name: migrate
-          image: mela-api
+          image: {{ include "mela.image" (list . .Values.image.api) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["sh", "-c", "python -m app.wait_db && alembic upgrade head"]
           envFrom:
             - configMapRef: { name: mela-config }
-            - secretRef: { name: mela-secrets }
+            - secretRef: { name: {{ .Values.existingSecret }} }
           resources:
             requests: { cpu: 50m, memory: 96Mi }
             limits: { memory: 256Mi }
       containers:
         - name: api
-          image: mela-api
+          image: {{ include "mela.image" (list . .Values.image.api) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
               containerPort: 8000
           envFrom:
             - configMapRef: { name: mela-config }
-            - secretRef: { name: mela-secrets }
+            - secretRef: { name: {{ .Values.existingSecret }} }
           readinessProbe:
             httpGet: { path: /api/readyz, port: http }
             periodSeconds: 10
@@ -60,8 +68,7 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 20
           resources:
-            requests: { cpu: 50m, memory: 128Mi }
-            limits: { memory: 384Mi }
+            {{- toYaml .Values.api.resources | nindent 12 }}
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

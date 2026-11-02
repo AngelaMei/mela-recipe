@@ -78,10 +78,10 @@ echo "Deploying $TAG to context '$CTX', namespace '$NAMESPACE'"
 
 # ---------------------------------------------------------------- build + push
 if [[ $SKIP_BUILD -eq 0 ]]; then
-  say "Building and pushing $API_IMAGE"
-  docker buildx build --platform "$PLATFORM" -t "$API_IMAGE" --push "$ROOT/backend"
-  say "Building and pushing $WEB_IMAGE"
-  docker buildx build --platform "$PLATFORM" -t "$WEB_IMAGE" --push "$ROOT/web"
+  say "Building and pushing $API_IMAGE and $WEB_IMAGE"
+  # Both images in parallel, from docker-bake.hcl
+  (cd "$ROOT" && REGISTRY="$REGISTRY" TAG="$TAG" PLATFORM="$PLATFORM" \
+    docker buildx bake --file docker-bake.hcl --push)
 fi
 
 # ---------------------------------------------------------------- namespace + secret

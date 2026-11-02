@@ -71,7 +71,7 @@ You need `git`, `docker` (with buildx), `kubectl` pointed at the cluster, `helm`
 deploy/deploy.sh
 ```
 
-This builds `mela-api` and `mela-web` from the current git `HEAD` (tagged with the short commit hash, plus `-dirty-<time>` if there are uncommitted changes), pushes them, updates the Secret, and runs `helm upgrade --install` with `--wait`. The API's `migrate` init container applies database migrations on every rollout.
+This builds `mela-api` and `mela-web` with `docker buildx bake` (targets in `docker-bake.hcl`, both in parallel) from the current git `HEAD` (tagged with the short commit hash, plus `-dirty-<time>` if there are uncommitted changes), pushes them, updates the Secret, and runs `helm upgrade --install` with `--wait`. The API's `migrate` init container applies database migrations on every rollout.
 
 Other options:
 
@@ -93,7 +93,20 @@ If the cluster nodes are ARM, set `PLATFORM=linux/arm64` in `deploy/deploy.env`.
 
 **Day to day**
 
-`make status`, `make logs`, `make psql` and `make backup-now`. To restore a nightly backup:
+```bash
+kubectl -n mela get pods,svc,ingress,certificate,pvc     # status
+```
+```bash
+kubectl -n mela logs deploy/mela-api --all-containers --tail=100     # API logs
+```
+```bash
+kubectl -n mela exec -it statefulset/mela-postgres -- sh -c 'psql -U "$POSTGRES_USER" "$POSTGRES_DB"'     # database shell
+```
+```bash
+kubectl -n mela create job --from=cronjob/mela-backup mela-backup-manual-$(date +%s)     # backup now
+```
+
+To restore a nightly backup:
 
 ```bash
 kubectl -n mela exec -i statefulset/mela-postgres -- sh -c 'psql -U "$POSTGRES_USER" "$POSTGRES_DB"' < <(gunzip -c mela-YYYYMMDD-HHMM.sql.gz)

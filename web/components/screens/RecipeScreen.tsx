@@ -159,6 +159,7 @@ export function RecipeScreen({ id }: { id: string }) {
           size={200}
           plateId={recipe.plate_id}
           photoUrl={recipe.photo_url}
+          photoCrop={recipe.photo_crop}
           empty={!made}
           glyph={!made ? sourceGlyph(recipe.source) : undefined}
           label={recipe.name}
@@ -280,12 +281,14 @@ export function RecipeScreen({ id }: { id: string }) {
         open={pickerOpen}
         current={recipe.plate_id}
         photoUrl={recipe.photo_url}
+        photoCrop={recipe.photo_crop}
         onClose={() => setPickerOpen(false)}
         onChoose={choosePlate}
       />
       <LogForm
         open={!!logOpen}
         recipeId={recipe.id}
+        plateId={recipe.plate_id}
         log={logOpen?.log ?? null}
         onClose={() => setLogOpen(null)}
         onSaved={async () => {

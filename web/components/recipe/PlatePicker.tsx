@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/core/Button";
 import { Sheet } from "@/components/overlays/Sheet";
+import type { PhotoCrop } from "@/lib/crop";
 import { DEFAULT_PLATE, PLATES, plateDef } from "@/lib/plates";
 import { usePrefs } from "@/lib/prefs";
 
@@ -13,12 +14,13 @@ export interface PlatePickerProps {
   open: boolean;
   current: string | null;
   photoUrl: string | null;
+  photoCrop: PhotoCrop | null;
   onClose: () => void;
   onChoose: (plateId: string) => Promise<void> | void;
 }
 
 /** "Choose a plate": 160px preview, plate name, 4×2 grid, "Use this plate". */
-export function PlatePicker({ open, current, photoUrl, onClose, onChoose }: PlatePickerProps) {
+export function PlatePicker({ open, current, photoUrl, photoCrop, onClose, onChoose }: PlatePickerProps) {
   const { t, lang } = usePrefs();
   const [selected, setSelected] = useState(plateDef(current ?? DEFAULT_PLATE).id);
   const [saving, setSaving] = useState(false);
@@ -32,7 +34,7 @@ export function PlatePicker({ open, current, photoUrl, onClose, onChoose }: Plat
   return (
     <Sheet open={open} title={t.choosePlate} onClose={onClose}>
       <div className={`picker__preview cloth cloth--${plate.cloth}`}>
-        <Plate size={150} plateId={plate.id} photoUrl={photoUrl} decorative />
+        <Plate size={150} plateId={plate.id} photoUrl={photoUrl} photoCrop={photoCrop} decorative />
       </div>
       <p className="picker__name" aria-live="polite">
         {plate.name[lang]}

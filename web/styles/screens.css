@@ -441,6 +441,47 @@ textarea.editor-input--step {
   object-fit: cover;
 }
 
+/* Photo adjuster (log form) */
+.photo-adjuster {
+  margin-bottom: 12px;
+}
+.photo-adjuster__stage {
+  display: grid;
+  place-items: center;
+  height: 268px;
+  border-radius: var(--radius-group);
+  cursor: grab;
+  touch-action: none; /* we handle drag and pinch */
+  user-select: none;
+  -webkit-user-select: none;
+}
+.photo-adjuster__stage:active {
+  cursor: grabbing;
+}
+.photo-adjuster__hint {
+  margin-top: 8px;
+}
+.photo-adjuster__controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+.photo-adjuster__zoom {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.photo-adjuster__zoom input {
+  flex: 1;
+  accent-color: var(--accent);
+}
+
 /* Login */
 .login {
   min-height: 100dvh;

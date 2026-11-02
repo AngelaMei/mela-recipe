@@ -30,6 +30,7 @@ export function SearchResult({ recipe, t, matchedIndex, showNote }: SearchResult
           size={64}
           plateId={recipe.plate_id}
           photoUrl={recipe.photo_url}
+          photoCrop={recipe.photo_crop}
           empty={!made}
           glyph={!made ? sourceGlyph(recipe.source) : undefined}
           label={recipe.name}

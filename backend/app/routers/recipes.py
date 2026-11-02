@@ -156,6 +156,7 @@ def create_log(recipe_id: str, body: LogIn, db: Session = Depends(get_db), membe
         note=_clean(body.note),
         tweaks=_clean(body.tweaks),
         photo_id=_photo_id(db, body.photo_id),
+        photo_crop=body.photo_crop.model_dump() if body.photo_id and body.photo_crop else None,
         created_by=member,
     )
     db.add(log)
@@ -189,6 +190,9 @@ def update_log(log_id: str, body: LogPatch, db: Session = Depends(get_db), membe
         log.photo_id = _photo_id(db, data["photo_id"])
     elif data.get("clear_photo"):
         log.photo_id = None
+        log.photo_crop = None
+    if "photo_crop" in data and log.photo_id:
+        log.photo_crop = body.photo_crop.model_dump() if body.photo_crop else None
     db.commit()
     return log_out(log)
 

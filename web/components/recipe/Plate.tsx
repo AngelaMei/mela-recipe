@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 
+import { clampCrop, imageSize, type PhotoCrop } from "@/lib/crop";
 import { loadPlateManifest, plateDef, type PlateDef } from "@/lib/plates";
 
 import { Icon } from "../core/Icon";
@@ -10,6 +11,8 @@ export interface PlateProps {
   plateId?: string | null;
   size: number;
   photoUrl?: string | null;
+  /** How the photo is framed (position and size). Centred and filling the dish when absent. */
+  photoCrop?: PhotoCrop | null;
   /** Dashed empty plate = "not made yet" */
   empty?: boolean;
   glyph?: string;
@@ -24,7 +27,7 @@ export interface PlateProps {
  * photo (circle crop) → light. The drop shadow is CSS (filter), so it follows
  * the plate's outline.
  */
-export function Plate({ plateId, size, photoUrl, empty, glyph, label, selected, decorative }: PlateProps) {
+export function Plate({ plateId, size, photoUrl, photoCrop, empty, glyph, label, selected, decorative }: PlateProps) {
   const [, force] = useState(0);
   useEffect(() => {
     loadPlateManifest().then(() => force((n) => n + 1));
@@ -49,12 +52,12 @@ export function Plate({ plateId, size, photoUrl, empty, glyph, label, selected, 
           <img className="plate__rim-img" src={def.image} alt="" />
           {photoUrl && (
             <svg className="plate__overlay" viewBox="0 0 200 200" aria-hidden="true">
-              <Food photoUrl={photoUrl} r={100 * (1 - (2 * (def.foodInset ?? 22)) / 100)} />
+              <Food photoUrl={photoUrl} crop={photoCrop} r={foodRadius(def)} />
             </svg>
           )}
         </>
       ) : (
-        <PlateSvg def={def} photoUrl={photoUrl} detail={size >= 90} />
+        <PlateSvg def={def} photoUrl={photoUrl} photoCrop={photoCrop} detail={size >= 90} />
       )}
     </span>
   );
@@ -101,12 +104,33 @@ function seeded(seed: number) {
   };
 }
 
-function PlateSvg({ def, photoUrl, detail }: { def: PlateDef; photoUrl?: string | null; detail: boolean }) {
+/** Mean radius of the dish shape, in plate units (viewBox 0..200). */
+function foodRadius(def: PlateDef): number {
+  if (def.image) return 100 * (1 - (2 * (def.foodInset ?? 22)) / 100);
+  return Math.min(R * def.wellR * 0.86, 56);
+}
+
+/** Width of the square the dish shape fits in, as a fraction of the plate's size. */
+export function dishAreaFraction(plateId: string | null | undefined): number {
+  return (foodRadius(plateDef(plateId)) * 1.12 * 2) / 200;
+}
+
+function PlateSvg({
+  def,
+  photoUrl,
+  photoCrop,
+  detail,
+}: {
+  def: PlateDef;
+  photoUrl?: string | null;
+  photoCrop?: PhotoCrop | null;
+  detail: boolean;
+}) {
   const uid = useId().replace(/:/g, "");
   const id = (s: string) => `${uid}-${s}`;
   const path = outline(def, R);
   const wellR = R * def.wellR;
-  const foodR = Math.min(wellR * 0.86, 56);
+  const foodR = foodRadius(def);
 
   return (
     <svg className="plate__svg" viewBox="0 0 200 200" aria-hidden="true">
@@ -161,7 +185,7 @@ function PlateSvg({ def, photoUrl, detail }: { def: PlateDef; photoUrl?: string 
         <circle cx={C} cy={C} r={wellR} fill="none" stroke={`url(#${id("wellEdge")})`} strokeWidth={def.centreGlaze ? 0.8 : 2.2} />
 
         {/* dish photo */}
-        {photoUrl && <Food photoUrl={photoUrl} r={foodR} />}
+        {photoUrl && <Food photoUrl={photoUrl} crop={photoCrop} r={foodR} />}
 
         {/* light */}
         <rect width="200" height="200" fill={`url(#${id("light")})`} />
@@ -222,10 +246,18 @@ export function blobPath(seed: number, r: number): string {
 }
 
 /** The dish photo in an organic shape, with a softly feathered edge and a faint shadow on the plate. */
-function Food({ photoUrl, r }: { photoUrl: string; r: number }) {
+function Food({ photoUrl, crop, r }: { photoUrl: string; crop?: PhotoCrop | null; r: number }) {
   const uid = useId().replace(/:/g, "");
   const shape = blobPath(hash(photoUrl), r);
   const box = r * 1.12; // the shape reaches ~9% past r
+
+  // Framing: place the photo so its (cx, cy) point is at the centre, at the chosen size.
+  let rect = { x: C - box, y: C - box, w: box * 2, h: box * 2, fit: "xMidYMid slice" };
+  if (crop) {
+    const c = clampCrop(crop);
+    const { w, h } = imageSize(box * 2, c);
+    rect = { x: C - c.cx * w, y: C - c.cy * h, w, h, fit: "none" };
+  }
   return (
     <g>
       <defs>
@@ -242,11 +274,11 @@ function Food({ photoUrl, r }: { photoUrl: string; r: number }) {
       <path d={shape} fill="#2b1a0c" opacity="0.18" transform="translate(1.6 2.4)" filter={`url(#${uid}-shadow)`} />
       <image
         href={photoUrl}
-        x={C - box}
-        y={C - box}
-        width={box * 2}
-        height={box * 2}
-        preserveAspectRatio="xMidYMid slice"
+        x={rect.x}
+        y={rect.y}
+        width={rect.w}
+        height={rect.h}
+        preserveAspectRatio={rect.fit}
         mask={`url(#${uid}-mask)`}
       />
     </g>

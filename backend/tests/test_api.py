@@ -133,3 +133,18 @@ def test_structured_ingredients_keep_portion_as_typed(client):
     assert g["open"][0]["qty"] == "300" and g["open"][0]["unit"] == "g"
     g = client.post("/api/grocery", json={"text": "雞腿 200g"}).json()
     assert len(g["open"]) == 1 and g["open"][0]["qty"] == "500"
+
+
+def test_photo_crop_is_saved_and_shown_on_the_plate(client):
+    rec = _recipe(client, "Toast", [("bread", 2, "slices")])
+    up = client.post("/api/photos", files={"file": ("a.jpg", b"\xff\xd8\xff fake", "image/jpeg")}).json()
+    crop = {"cx": 0.4, "cy": 0.6, "zoom": 1.8, "aspect": 1.5}
+    log = client.post(f"/api/recipes/{rec['id']}/logs", json={"photo_id": up["id"], "photo_crop": crop}).json()
+    assert log["photo_crop"] == crop
+    assert client.get(f"/api/recipes/{rec['id']}").json()["photo_crop"] == crop
+
+    crop2 = {**crop, "zoom": 1.0}
+    assert client.patch(f"/api/logs/{log['id']}", json={"photo_crop": crop2}).json()["photo_crop"] == crop2
+    assert client.patch(f"/api/logs/{log['id']}", json={"photo_crop": {**crop, "zoom": 9}}).status_code == 422
+    cleared = client.patch(f"/api/logs/{log['id']}", json={"clear_photo": True}).json()
+    assert cleared["photo_url"] is None and cleared["photo_crop"] is None

@@ -1,14 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/core/Button";
 import { TextArea, TextField } from "@/components/forms/TextField";
 import { Sheet } from "@/components/overlays/Sheet";
 import { api } from "@/lib/api";
+import type { PhotoCrop } from "@/lib/crop";
 import { resizeImage } from "@/lib/image";
 import { usePrefs } from "@/lib/prefs";
 import type { CookLog } from "@/lib/types";
+
+import { PhotoAdjuster } from "./PhotoAdjuster";
 
 function today(): string {
   const d = new Date();
@@ -18,13 +21,15 @@ function today(): string {
 export interface LogFormProps {
   open: boolean;
   recipeId: string;
+  /** The recipe's plate, so the photo is framed on the plate it will appear on. */
+  plateId: string | null;
   log: CookLog | null; // null = new cook
   onClose: () => void;
   onSaved: () => void;
 }
 
 /** Log form: date, rating, note, photo, tweaks. Also edits/deletes an existing log. */
-export function LogForm({ open, recipeId, log, onClose, onSaved }: LogFormProps) {
+export function LogForm({ open, recipeId, plateId, log, onClose, onSaved }: LogFormProps) {
   const { t } = usePrefs();
   const [date, setDate] = useState(today());
   const [rating, setRating] = useState<number | null>(null);
@@ -32,6 +37,8 @@ export function LogForm({ open, recipeId, log, onClose, onSaved }: LogFormProps)
   const [tweaks, setTweaks] = useState("");
   const [photoId, setPhotoId] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [crop, setCrop] = useState<PhotoCrop | null>(null);
+  const onCrop = useCallback((c: PhotoCrop) => setCrop(c), []);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +52,7 @@ export function LogForm({ open, recipeId, log, onClose, onSaved }: LogFormProps)
     setTweaks(log?.tweaks ?? "");
     setPhotoId(log?.photo_id ?? null);
     setPhotoUrl(log?.photo_url ?? null);
+    setCrop(log?.photo_crop ?? null);
     setError(null);
   }, [open, log]);
 
@@ -58,6 +66,7 @@ export function LogForm({ open, recipeId, log, onClose, onSaved }: LogFormProps)
       const res = await api.upload<{ id: string; url: string }>("/api/photos", form);
       setPhotoId(res.id);
       setPhotoUrl(res.url);
+      setCrop(null); // the adjuster starts it centred
     } catch {
       setError(t.genericError);
     } finally {
@@ -68,7 +77,7 @@ export function LogForm({ open, recipeId, log, onClose, onSaved }: LogFormProps)
   const save = async () => {
     setSaving(true);
     setError(null);
-    const body = { cooked_on: date || today(), rating, note, tweaks, photo_id: photoId };
+    const body = { cooked_on: date || today(), rating, note, tweaks, photo_id: photoId, photo_crop: photoId ? crop : null };
     try {
       if (log) await api.patch(`/api/logs/${log.id}`, { ...body, clear_photo: !photoId });
       else await api.post(`/api/recipes/${recipeId}/logs`, body);
@@ -116,13 +125,13 @@ export function LogForm({ open, recipeId, log, onClose, onSaved }: LogFormProps)
 
         <div>
           <span className="field__label">{t.photo}</span>
+          {photoUrl && <PhotoAdjuster photoUrl={photoUrl} plateId={plateId} crop={crop} onChange={onCrop} />}
           <div className="photo-input">
-            {photoUrl && <img src={photoUrl} alt="" />}
             <Button size="sm" icon="photo_camera" disabled={uploading} onClick={() => fileRef.current?.click()}>
               {uploading ? t.uploading : photoUrl ? t.changePhoto : t.addPhoto}
             </Button>
             {photoUrl && (
-              <Button size="sm" variant="ghost" onClick={() => { setPhotoId(null); setPhotoUrl(null); }}>
+              <Button size="sm" variant="ghost" onClick={() => { setPhotoId(null); setPhotoUrl(null); setCrop(null); }}>
                 {t.removePhoto}
               </Button>
             )}

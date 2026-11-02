@@ -1,3 +1,5 @@
+import type { PhotoCrop } from "./crop";
+
 export type Source = "youtube" | "instagram" | "link" | "manual";
 
 export interface Ingredient {
@@ -19,6 +21,7 @@ export interface CookLog {
   tweaks: string | null;
   photo_url: string | null;
   photo_id: string | null;
+  photo_crop: PhotoCrop | null;
   created_by: string;
   created_at: string | null;
 }
@@ -39,6 +42,7 @@ export interface Recipe {
   last_cooked: string | null;
   avg_rating: number | null;
   photo_url: string | null;
+  photo_crop: PhotoCrop | null;
   matched_index?: number | null;
   logs?: CookLog[];
 }

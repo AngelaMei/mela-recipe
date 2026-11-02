@@ -2,7 +2,7 @@
 export async function resizeImage(file: File, maxSide = 1280, quality = 0.85): Promise<Blob> {
   if (!file.type.startsWith("image/")) return file;
   try {
-    const bitmap = await createImageBitmap(file);
+    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
     const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(bitmap.width * scale);

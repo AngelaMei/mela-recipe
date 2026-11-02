@@ -55,12 +55,27 @@ class RecipePatch(BaseModel):
     steps: list[str] | None = None
 
 
+class PhotoCropIn(BaseModel):
+    """Framing of the dish photo on the plate.
+
+    cx, cy: the point of the photo shown at the plate's centre (0..1 of its width/height).
+    zoom: 1 = the photo's short side just fills the dish; up to 4.
+    aspect: the photo's width / height.
+    """
+
+    cx: float = Field(ge=0, le=1)
+    cy: float = Field(ge=0, le=1)
+    zoom: float = Field(ge=1, le=4)
+    aspect: float = Field(gt=0.1, lt=10)
+
+
 class LogIn(BaseModel):
     cooked_on: date | None = None
     rating: int | None = Field(default=None, ge=1, le=5)
     note: str | None = Field(default=None, max_length=4000)
     tweaks: str | None = Field(default=None, max_length=4000)
     photo_id: str | None = None
+    photo_crop: PhotoCropIn | None = None
 
 
 class LogPatch(LogIn):

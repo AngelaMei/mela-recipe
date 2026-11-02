@@ -57,6 +57,8 @@ class CookLog(Base):
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     tweaks: Mapped[str | None] = mapped_column(Text, nullable=True)
     photo_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("photos.id", ondelete="SET NULL"), nullable=True)
+    # How the photo is framed on the plate: {cx, cy, zoom, aspect} (see web/lib/crop.ts)
+    photo_crop: Mapped[dict | None] = mapped_column(JSONType, nullable=True)
     created_by: Mapped[str] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 

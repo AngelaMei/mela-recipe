@@ -13,8 +13,8 @@ COOKIE = "mela_session"
 
 
 def _serializer(settings: Settings) -> URLSafeTimedSerializer:
-    if len(settings.session_secret) < 16:
-        raise HTTPException(status_code=500, detail="SESSION_SECRET must be set (16+ characters)")
+    if len(settings.session_secret) < 16:  # also refused at startup (main.config_problems)
+        raise HTTPException(status_code=500, detail="SESSION_SECRET must be at least 16 characters")
     return URLSafeTimedSerializer(settings.session_secret, salt="mela-session")
 
 

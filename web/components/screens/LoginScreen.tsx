@@ -34,7 +34,8 @@ export function LoginScreen() {
       await mutate(() => true, undefined, { revalidate: true });
       router.replace("/");
     } catch (err) {
-      setError(err instanceof ApiError && err.status === 401 ? t.wrongPasscode : t.offline);
+      // 401: wrong passcode. Any other HTTP error: the server answered but failed. No response: offline.
+      setError(err instanceof ApiError ? (err.status === 401 ? t.wrongPasscode : t.genericError) : t.offline);
       setBusy(false);
     }
   };

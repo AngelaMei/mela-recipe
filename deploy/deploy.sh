@@ -94,6 +94,15 @@ if [[ -f "$DEPLOY/secrets.env" ]]; then
   for key in POSTGRES_PASSWORD MELA_PASSCODE SESSION_SECRET; do
     grep -qE "^$key=.+" "$DEPLOY/secrets.env" || die "deploy/secrets.env: $key is empty"
   done
+  # kubectl keeps quotes as part of the value: MELA_PASSCODE="1234" would make the passcode "1234" with quotes.
+  if grep -qE "^[A-Z_]+=[\"'].*[\"'][[:space:]]*$" "$DEPLOY/secrets.env"; then
+    die "deploy/secrets.env: remove the quotes around values (KEY=value, not KEY=\"value\")"
+  fi
+  secret_len="$(grep -E '^SESSION_SECRET=' "$DEPLOY/secrets.env" | head -1 | cut -d= -f2- | tr -d '\r\n' | wc -c | tr -d ' ')"
+  [[ "$secret_len" -ge 16 ]] || die "deploy/secrets.env: SESSION_SECRET is $secret_len characters; use at least 16 (openssl rand -base64 32)"
+  if grep -q $'\r' "$DEPLOY/secrets.env"; then
+    die "deploy/secrets.env has Windows line endings (CRLF); save it with LF line endings"
+  fi
   "${KUBECTL[@]}" -n "$NAMESPACE" create secret generic "$SECRET_NAME" \
     --from-env-file="$DEPLOY/secrets.env" --dry-run=client -o yaml | "${KUBECTL[@]}" apply -f - >/dev/null
 elif ! "${KUBECTL[@]}" -n "$NAMESPACE" get secret "$SECRET_NAME" >/dev/null 2>&1; then

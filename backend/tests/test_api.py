@@ -191,3 +191,18 @@ def test_export_requires_sign_in(db):
     from app.main import app
 
     assert TestClient(app).get("/api/export").status_code == 401
+
+
+def test_startup_refuses_a_short_session_secret(monkeypatch):
+    import pytest
+    from fastapi.testclient import TestClient
+
+    from app.config import get_settings
+    from app.main import app, config_problems
+
+    assert config_problems() == []
+    monkeypatch.setattr(get_settings(), "session_secret", "short")
+    assert "SESSION_SECRET is 5 characters" in config_problems()[0]
+    with pytest.raises(RuntimeError, match="SESSION_SECRET"):
+        with TestClient(app):  # runs the lifespan (startup)
+            pass

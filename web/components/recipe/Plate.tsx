@@ -106,8 +106,9 @@ function seeded(seed: number) {
 
 /** Mean radius of the dish shape, in plate units (viewBox 0..200). */
 function foodRadius(def: PlateDef): number {
-  if (def.image) return 100 * (1 - (2 * (def.foodInset ?? 22)) / 100);
-  return Math.min(R * def.wellR * 0.86, 56);
+  // The dish fills the well and reaches a little onto the rim, like food served on a real plate.
+  if (def.image) return 100 * (1 - (2 * (def.foodInset ?? 15)) / 100);
+  return R * 0.7;
 }
 
 /** Width of the square the dish shape fits in, as a fraction of the plate's size. */

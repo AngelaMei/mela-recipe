@@ -22,4 +22,4 @@ If you later shoot or commission real plates:
 
 - 1024×1024 transparent WebP, top-down, light from the top-left, **no baked shadow**.
 - Give each plate a `foodInset` (percent): where the dish photo sits inside the well.
-- Drop the files here and list them in `plates.json`, e.g. `{ "id": "garland", "image": "/plates/garland.webp", "foodInset": 22 }`. An image replaces the drawn plate; its tablecloth stays.
+- Drop the files here and list them in `plates.json`, e.g. `{ "id": "garland", "image": "/plates/garland.webp", "foodInset": 15 }`. An image replaces the drawn plate; its tablecloth stays.

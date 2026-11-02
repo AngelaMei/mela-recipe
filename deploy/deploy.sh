@@ -118,7 +118,25 @@ fi
 
 # ---------------------------------------------------------------- roll out
 say "Rolling out $RELEASE ($TAG)"
-"${HELM[@]}" upgrade --install "$RELEASE" "$CHART" --namespace "$NAMESPACE" "${VALUES[@]}" --wait --timeout 10m
+# No `helm --wait`: it also waits for every PVC to be Bound, and with a
+# WaitForFirstConsumer StorageClass (the GKE default) the backup volume stays
+# Pending until the nightly job first runs. Wait for the workloads instead.
+"${HELM[@]}" upgrade --install "$RELEASE" "$CHART" --namespace "$NAMESPACE" "${VALUES[@]}" --timeout 10m
+
+failed=0
+for res in statefulset/mela-postgres deployment/mela-api deployment/mela-web; do
+  echo "Waiting for $res"
+  if ! "${KUBECTL[@]}" -n "$NAMESPACE" rollout status "$res" --timeout=10m; then
+    failed=1
+    break
+  fi
+done
+if [[ $failed -eq 1 ]]; then
+  echo
+  "${KUBECTL[@]}" -n "$NAMESPACE" get pods -o wide || true
+  "${KUBECTL[@]}" -n "$NAMESPACE" get events --sort-by=.lastTimestamp 2>/dev/null | tail -n 15 || true
+  die "Rollout didn't finish. Check the pods above, e.g. kubectl -n $NAMESPACE logs deploy/mela-api --all-containers"
+fi
 
 say "Done"
 "${KUBECTL[@]}" -n "$NAMESPACE" get pods -o wide

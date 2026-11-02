@@ -71,7 +71,7 @@ You need `git`, `docker` (with buildx), `kubectl` pointed at the cluster, `helm`
 deploy/deploy.sh
 ```
 
-This builds `mela-api` and `mela-web` with `docker buildx bake` (targets in `docker-bake.hcl`, both in parallel) from the current git `HEAD` (tagged with the short commit hash, plus `-dirty-<time>` if there are uncommitted changes), pushes them, updates the Secret, and runs `helm upgrade --install` with `--wait`. The API's `migrate` init container applies database migrations on every rollout.
+This builds `mela-api` and `mela-web` with `docker buildx bake` (targets in `docker-bake.hcl`, both in parallel) from the current git `HEAD` (tagged with the short commit hash, plus `-dirty-<time>` if there are uncommitted changes), pushes them, updates the Secret, runs `helm upgrade --install`, then waits for Postgres, the API and the web app to finish rolling out (`kubectl rollout status`). It doesn't use `helm --wait`, because that also waits for the backup volume, which a `WaitForFirstConsumer` StorageClass (the GKE default) only creates when the nightly backup first runs. The API's `migrate` init container applies database migrations on every rollout.
 
 Other options:
 

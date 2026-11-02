@@ -555,3 +555,62 @@ textarea.editor-input--step {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* Import recipes */
+.backup__import {
+  margin-top: 6px;
+}
+.import__intro {
+  margin: 0;
+  font-size: var(--text-para);
+}
+.import__format {
+  padding: 4px 16px 14px;
+  font-size: var(--text-para);
+}
+.import__format summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.import__format ul {
+  margin: 4px 0 12px;
+  padding-left: 18px;
+  color: var(--text-body);
+}
+.import__format li + li {
+  margin-top: 6px;
+}
+.import__sample {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-field);
+  background: var(--surface-sunken);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  color: var(--text-body);
+}
+.import__row {
+  align-items: flex-start;
+}
+.import__row--skip .row__title,
+.import__row--skip .row__sub {
+  color: var(--text-tertiary);
+}
+.import__warning {
+  color: var(--accent);
+}
+.import__badge {
+  flex: none;
+  margin-top: 2px;
+  padding: 2px 8px;
+  border-radius: var(--radius-chip);
+  background: var(--surface-sunken);
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+}

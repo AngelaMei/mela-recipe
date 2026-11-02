@@ -106,6 +106,9 @@ export function SettingsScreen() {
               {exporting ? t.exporting : t.exportRecipes}
             </Button>
             {exportError && <p className="error-text">{t.exportFailed}</p>}
+            <Button icon="upload" variant="ghost" block onClick={() => router.push("/settings/import")} className="backup__import">
+              {t.importRecipes}
+            </Button>
           </div>
         </section>
         <section>

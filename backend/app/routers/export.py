@@ -52,8 +52,10 @@ def _markdown(recipes: list[Recipe], household: str, exported_at: datetime) -> s
         if r.source_url:
             meta.append(r.source_url)
         out += ["", " · ".join(meta), ""]
+        if r.plate_id:
+            out += [f"Plate: {r.plate_id}", ""]
         if r.note:
-            out += [f"> {r.note}", ""]
+            out += [f"> {line}" for line in r.note.split("\n")] + [""]
         if r.ingredients:
             out.append("### Ingredients")
             for ing in r.ingredients:

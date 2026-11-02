@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from .config import get_settings
 from .db import get_db
-from .routers import auth, export, grocery, parse, photos, recipes
+from .routers import auth, export, grocery, imports, parse, photos, recipes
 
 log = logging.getLogger("mela")
 
@@ -37,7 +37,7 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="Mela API", docs_url="/api/docs", openapi_url="/api/openapi.json", lifespan=lifespan)
 
-for r in (auth.router, parse.router, recipes.router, grocery.router, photos.router, export.router):
+for r in (auth.router, parse.router, recipes.router, grocery.router, photos.router, export.router, imports.router):
     app.include_router(r)
 
 

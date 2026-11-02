@@ -385,19 +385,19 @@ textarea.editor-input--step {
 .picker__preview {
   display: grid;
   place-items: center;
-  gap: 12px;
-  padding: 22px 0 18px;
+  padding: 24px 0;
   border-radius: var(--radius-group);
-  margin-bottom: 18px;
 }
 .picker__name {
+  margin: 10px 0 16px;
+  text-align: center;
   font-size: var(--text-list);
   font-weight: 600;
   color: var(--text-primary);
 }
 .picker__grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px 8px;
   justify-items: center;
   margin-bottom: 22px;
@@ -461,4 +461,46 @@ textarea.editor-input--step {
   font-size: var(--text-caption);
   color: var(--accent);
   margin: 8px 0 0;
+}
+
+/* /plates specimen */
+.specimen {
+  padding: calc(var(--status-bar) + 12px) 12px 40px;
+}
+.specimen__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+.specimen__cell {
+  margin: 0;
+}
+.specimen__cloth {
+  display: grid;
+  place-items: center;
+  height: 210px;
+}
+.specimen figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 4px 0;
+}
+.specimen__name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.specimen__sizes {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+@media (min-width: 700px) {
+  .app:has(.specimen) {
+    max-width: 1100px;
+  }
+  .specimen__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }

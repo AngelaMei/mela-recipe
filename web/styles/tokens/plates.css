@@ -1,30 +1,92 @@
-/* CSS glazes are placeholders until the designer delivers plate images
-   (see public/plates/plates.json). Each plate has a rim glaze and a well tone. */
+/* Tablecloths. Each plate in lib/plates.ts sits on its own cloth in the recipe
+   hero and the plate picker, like a top-down tabletop photo. The plates
+   themselves are drawn as SVG in components/recipe/Plate.tsx.
+
+   Every cloth = base colour + pattern + a fine woven texture on top. */
+
 :root {
-  --glaze-celadon: radial-gradient(circle at 35% 30%, #d9e6d6 0%, #b6cdb5 55%, #9bb79c 100%);
-  --well-celadon: #cddcc9;
+  --weave:
+    repeating-linear-gradient(0deg, rgba(40, 28, 16, 0.06) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0 1px, transparent 1px 3px);
+  --weave-strong:
+    repeating-linear-gradient(0deg, rgba(40, 28, 16, 0.11) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.16) 0 1.5px, transparent 1.5px 4px);
+}
 
-  --glaze-cobalt: repeating-conic-gradient(from 8deg, #f3f1ea 0deg 10deg, #e9e7df 10deg 20deg),
-    radial-gradient(circle, transparent 60%, #2f4f8a 61%, #2f4f8a 64%, transparent 65%);
-  --well-cobalt: #f4f2ec;
+.cloth {
+  background-color: var(--bg-linen);
+}
 
-  --glaze-ochre: radial-gradient(circle at 35% 30%, #e9c98b 0%, #d4a554 60%, #b98a3d 100%);
-  --well-ochre: #efd9ab;
+/* White with violet double stripes */
+.cloth--violet-stripe {
+  background:
+    var(--weave),
+    repeating-linear-gradient(90deg, transparent 0 30px, #5a4a8e 30px 33px, transparent 33px 37px, #5a4a8e 37px 40px, transparent 40px 72px),
+    #f6f4f1;
+}
 
-  --glaze-speckle: radial-gradient(circle at 20% 30%, rgba(90, 70, 50, 0.35) 0 1px, transparent 1.5px) 0 0 / 9px 9px,
-    radial-gradient(circle at 70% 60%, rgba(90, 70, 50, 0.28) 0 1px, transparent 1.5px) 0 0 / 13px 13px,
-    radial-gradient(circle at 35% 30%, #f7f1e6 0%, #e9dfcd 100%);
-  --well-speckle: #f6efe2;
+/* Chartreuse weave with a wide natural stripe */
+.cloth--chartreuse-weave {
+  background:
+    var(--weave-strong),
+    linear-gradient(90deg, transparent 43%, #eeecdc 43% 57%, transparent 57%),
+    #c5c93c;
+}
 
-  --glaze-tenmoku: radial-gradient(circle at 35% 28%, #7a4a2b 0%, #4a2a18 55%, #2a1810 100%);
-  --well-tenmoku: #5c3822;
+/* White with a blue windowpane check */
+.cloth--blue-windowpane {
+  background:
+    var(--weave),
+    repeating-linear-gradient(90deg, transparent 0 64px, #36589a 64px 71px),
+    repeating-linear-gradient(0deg, transparent 0 64px, #36589a 64px 71px),
+    #f3f2ee;
+}
 
-  --glaze-slate: radial-gradient(circle at 35% 30%, #8e959a 0%, #6b737a 60%, #555c62 100%);
-  --well-slate: #7d858b;
+/* Peach linen */
+.cloth--peach-linen {
+  background: var(--weave-strong), #e6c3a6;
+}
 
-  --glaze-blush: radial-gradient(circle at 35% 30%, #f3d8cc 0%, #e4b8a6 60%, #d39f8b 100%);
-  --well-blush: #f1d5c9;
+/* Red gingham */
+.cloth--red-gingham {
+  background:
+    var(--weave),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.6) 50%, transparent 50%) 0 0 / 30px 30px,
+    linear-gradient(0deg, rgba(255, 255, 255, 0.6) 50%, transparent 50%) 0 0 / 30px 30px,
+    #c8303b;
+}
 
-  --glaze-ash: radial-gradient(circle at 35% 30%, #ece8e1 0%, #d3cdc2 60%, #bdb5a8 100%);
-  --well-ash: #e6e1d8;
+/* Cream linen */
+.cloth--cream-linen {
+  background: var(--weave-strong), #eee6d8;
+}
+
+/* White with a fine navy check */
+.cloth--navy-check {
+  background:
+    var(--weave),
+    repeating-linear-gradient(90deg, transparent 0 36px, #2f4a7c 36px 38px, transparent 38px 42px, #2f4a7c 42px 43px),
+    repeating-linear-gradient(0deg, transparent 0 36px, #2f4a7c 36px 38px, transparent 38px 42px, #2f4a7c 42px 43px),
+    #f5f5f2;
+}
+
+/* Bold black brush print on white */
+.cloth--ink-print {
+  background:
+    var(--weave),
+    repeating-linear-gradient(104deg, transparent 0 40px, #1e1c1a 40px 56px, transparent 56px 74px, #1e1c1a 74px 80px, transparent 80px 132px),
+    #f4f3ef;
+}
+
+/* Lemon and cream stripes */
+.cloth--lemon-stripe {
+  background:
+    var(--weave),
+    repeating-linear-gradient(90deg, #d5cf48 0 24px, #f3f0de 24px 27px, #d5cf48 27px 30px, #f3f0de 30px 52px),
+    #f3f0de;
+}
+
+/* Dark mode: dim the cloth so the page stays dark around it. */
+[data-theme="dark"] .cloth {
+  box-shadow: inset 0 0 0 2000px rgba(16, 12, 9, 0.32);
 }

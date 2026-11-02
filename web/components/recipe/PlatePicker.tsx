@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/core/Button";
 import { Sheet } from "@/components/overlays/Sheet";
-import { PLATES } from "@/lib/plates";
+import { DEFAULT_PLATE, PLATES, plateDef } from "@/lib/plates";
 import { usePrefs } from "@/lib/prefs";
 
 import { Plate } from "./Plate";
@@ -20,23 +20,23 @@ export interface PlatePickerProps {
 /** "Choose a plate": 160px preview, plate name, 4×2 grid, "Use this plate". */
 export function PlatePicker({ open, current, photoUrl, onClose, onChoose }: PlatePickerProps) {
   const { t, lang } = usePrefs();
-  const [selected, setSelected] = useState(current ?? PLATES[0].id);
+  const [selected, setSelected] = useState(plateDef(current ?? DEFAULT_PLATE).id);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (open) setSelected(current ?? PLATES[0].id);
+    if (open) setSelected(plateDef(current ?? DEFAULT_PLATE).id);
   }, [open, current]);
 
   const plate = PLATES.find((p) => p.id === selected) ?? PLATES[0];
 
   return (
     <Sheet open={open} title={t.choosePlate} onClose={onClose}>
-      <div className="picker__preview linen">
-        <Plate size={160} plateId={plate.id} photoUrl={photoUrl} decorative />
-        <span className="picker__name" aria-live="polite">
-          {plate.name[lang]}
-        </span>
+      <div className={`picker__preview cloth cloth--${plate.cloth}`}>
+        <Plate size={150} plateId={plate.id} photoUrl={photoUrl} decorative />
       </div>
+      <p className="picker__name" aria-live="polite">
+        {plate.name[lang]}
+      </p>
       <div className="picker__grid" role="radiogroup" aria-label={t.choosePlate}>
         {PLATES.map((p) => (
           <button
@@ -48,7 +48,7 @@ export function PlatePicker({ open, current, photoUrl, onClose, onChoose }: Plat
             className="pressable"
             onClick={() => setSelected(p.id)}
           >
-            <Plate size={66} plateId={p.id} selected={p.id === selected} decorative />
+            <Plate size={72} plateId={p.id} selected={p.id === selected} decorative />
           </button>
         ))}
       </div>

@@ -13,6 +13,7 @@ import { IngredientRow } from "@/components/recipe/IngredientRow";
 import { LogEntry } from "@/components/recipe/LogEntry";
 import { Plate } from "@/components/recipe/Plate";
 import { PlatePicker } from "@/components/recipe/PlatePicker";
+import { plateDef } from "@/lib/plates";
 import { StepRow } from "@/components/recipe/StepRow";
 import { api } from "@/lib/api";
 import { sourceGlyph } from "@/lib/format";
@@ -140,7 +141,7 @@ export function RecipeScreen({ id }: { id: string }) {
 
   return (
     <main>
-      <div className="hero linen">
+      <div className={made ? `hero cloth cloth--${plateDef(recipe.plate_id).cloth}` : "hero linen"}>
         <IconButton
           className="hero__back"
           icon="chevron_left"

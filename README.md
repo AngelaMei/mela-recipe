@@ -114,6 +114,8 @@ kubectl -n mela exec -i statefulset/mela-postgres -- sh -c 'psql -U "$POSTGRES_U
 
 The nightly backups sit on a PVC in the same cluster, so copy them off-cluster too if your volumes aren't backed up. Settings › Backup in the app also downloads everything (recipes, cook logs, photos) as a .zip.
 
+**Importing recipes.** *Settings › Backup › Import recipes* takes a Mela backup `.zip`, recipes written as text (`.md` / `.txt`), or JSON, and shows a preview before anything is saved. The file format is in [`docs/import-format.md`](docs/import-format.md); there's an example at [`web/public/mela-import-example.md`](web/public/mela-import-example.md).
+
 ## Local development
 
 With Docker:

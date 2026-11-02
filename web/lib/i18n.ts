@@ -12,7 +12,7 @@ const en = {
   tabRecipes: "Recipes",
   addRecipe: "Add recipe",
   // Home
-  homeTitle: "Our kitchen",
+  homeTitle: "Our recipes",
   searchPlaceholder: "Search by ingredient",
   recentlyMade: "Recently made",
   allRecipes: "All recipes",
@@ -177,7 +177,7 @@ const zh: Strings = {
   tabGrocery: "採買",
   tabRecipes: "食譜",
   addRecipe: "新增食譜",
-  homeTitle: "我們的廚房",
+  homeTitle: "我們的食譜",
   searchPlaceholder: "用食材搜尋",
   recentlyMade: "最近做過",
   allRecipes: "所有食譜",

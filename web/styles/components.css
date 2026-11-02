@@ -523,11 +523,6 @@ textarea.field__input {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.recipe-tile__meta {
-  margin-top: -6px;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-}
 
 /* Shared list rows ------------------------------------------------------ */
 .list {

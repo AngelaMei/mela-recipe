@@ -47,7 +47,7 @@ export function HomeScreen() {
         {data && recent.length === 0 && <p className="empty">{t.homeEmpty}</p>}
         <div className="home-grid">
           {recent.map((r) => (
-            <RecipeTile key={r.id} recipe={r} meta={t.madeTimes(r.made_count)} />
+            <RecipeTile key={r.id} recipe={r} />
           ))}
         </div>
       </section>

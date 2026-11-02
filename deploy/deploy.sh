@@ -17,7 +17,9 @@ CHART="$DEPLOY/helm/mela"
 
 [[ -f "$DEPLOY/deploy.env" ]] && source "$DEPLOY/deploy.env"
 
-REGISTRY="${REGISTRY:-}"
+PROJECT="${WALLET_PROJECT:-wallet-paul-eruh3h2k}"
+REGION="${WALLET_REGION:-europe-west6}"
+REGISTRY="$REGION-docker.pkg.dev/$PROJECT/mela"
 NAMESPACE="${NAMESPACE:-mela}"
 RELEASE="${RELEASE:-mela}"
 PLATFORM="${PLATFORM:-linux/amd64}"

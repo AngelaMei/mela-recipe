@@ -1,7 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
+import { Button } from "@/components/core/Button";
 import { SegmentedControl } from "@/components/forms/SegmentedControl";
 import { TopBar } from "@/components/navigation/TopBar";
 import { api } from "@/lib/api";
@@ -13,6 +15,34 @@ export function SettingsScreen() {
   const { data: me } = useMe();
   const memberName = useMemberName();
   const router = useRouter();
+
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState(false);
+
+  // Fetch the zip and save it, so the app stays open (also in the installed PWA).
+  const exportBackup = async () => {
+    setExporting(true);
+    setExportError(false);
+    try {
+      const res = await fetch("/api/export", { credentials: "same-origin" });
+      if (res.status === 401) return router.replace("/login");
+      if (!res.ok) throw new Error(String(res.status));
+      const blob = await res.blob();
+      const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? "mela-backup.zip";
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      setExportError(true);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const signOut = async () => {
     await api.post("/api/auth/logout");
@@ -64,6 +94,18 @@ export function SettingsScreen() {
               <span>{t.units}</span>
               <span className="group__value">{t.unitsValue}</span>
             </div>
+          </div>
+        </section>
+        <section>
+          <h2 className="overline" style={{ marginBottom: 10 }}>
+            {t.backup}
+          </h2>
+          <div className="group backup">
+            <p className="backup__body">{t.backupBody}</p>
+            <Button icon="download" onClick={exportBackup} disabled={exporting} block>
+              {exporting ? t.exporting : t.exportRecipes}
+            </Button>
+            {exportError && <p className="error-text">{t.exportFailed}</p>}
           </div>
         </section>
         <section>

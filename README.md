@@ -56,6 +56,13 @@ Prerequisites: `kubectl` pointed at the cluster, a container registry the cluste
 
 If your registry is private, add an `imagePullSecret` to the two Deployments, or attach it to the `default` ServiceAccount in `mela`.
 
+**Backups.** There are two:
+- In the app, *Settings › Backup › Export recipes* downloads `mela-backup-YYYY-MM-DD.zip` with:
+  - `mela-backup.json`: every recipe, cook log (including photo framing) and grocery item, machine-readable;
+  - `recipes.md`: the recipes as readable text;
+  - `photos/`: every cook-log photo.
+- The cluster runs a nightly `pg_dump` (below).
+
 Day-two commands: `make status`, `make logs`, `make psql`, `make backup-now`. To restore a backup:
 
 ```bash

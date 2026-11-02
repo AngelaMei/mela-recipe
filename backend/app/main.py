@@ -3,11 +3,11 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .db import get_db
-from .routers import auth, grocery, parse, photos, recipes
+from .routers import auth, export, grocery, parse, photos, recipes
 
 app = FastAPI(title="Mela API", docs_url="/api/docs", openapi_url="/api/openapi.json")
 
-for r in (auth.router, parse.router, recipes.router, grocery.router, photos.router):
+for r in (auth.router, parse.router, recipes.router, grocery.router, photos.router, export.router):
     app.include_router(r)
 
 

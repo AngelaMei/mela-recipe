@@ -148,3 +148,46 @@ def test_photo_crop_is_saved_and_shown_on_the_plate(client):
     assert client.patch(f"/api/logs/{log['id']}", json={"photo_crop": {**crop, "zoom": 9}}).status_code == 422
     cleared = client.patch(f"/api/logs/{log['id']}", json={"clear_photo": True}).json()
     assert cleared["photo_url"] is None and cleared["photo_crop"] is None
+
+
+def test_export_backup_zip(client):
+    import io
+    import json
+    import zipfile
+
+    rec = client.post("/api/recipes", json={
+        "name": "三杯雞", "name_alt": "Three-cup chicken",
+        "ingredients": [{"name": "雞腿", "portion": "300g"}, {"name": "九層塔", "portion": "一把"}],
+        "steps": ["雞腿切塊", "爆香"],
+    }).json()
+    up = client.post("/api/photos", files={"file": ("a.jpg", b"\xff\xd8\xff fake", "image/jpeg")}).json()
+    client.post(f"/api/recipes/{rec['id']}/logs", json={
+        "rating": 5, "note": "好吃", "photo_id": up["id"], "photo_crop": {"cx": 0.5, "cy": 0.5, "zoom": 1.2, "aspect": 1.5},
+    })
+    client.post("/api/grocery", json={"text": "雞蛋 6顆"})
+
+    r = client.get("/api/export")
+    assert r.status_code == 200 and r.headers["content-type"] == "application/zip"
+    assert r.headers["content-disposition"].startswith('attachment; filename="mela-backup-')
+    zf = zipfile.ZipFile(io.BytesIO(r.content))
+    names = set(zf.namelist())
+    assert {"mela-backup.json", "recipes.md", f"photos/{up['id']}.jpg"} <= names
+
+    data = json.loads(zf.read("mela-backup.json"))
+    assert data["format"] == "mela-backup" and data["version"] == 1 and data["exported_by"] == "Mei"
+    (recipe,) = data["recipes"]
+    assert recipe["name"] == "三杯雞" and [i["portion"] for i in recipe["ingredients"]] == ["300g", "一把"]
+    assert recipe["logs"][0]["photo"] == f"photos/{up['id']}.jpg" and recipe["logs"][0]["photo_crop"]["zoom"] == 1.2
+    assert data["grocery"][0]["name"] == "雞蛋"
+    assert zf.read(f"photos/{up['id']}.jpg").startswith(b"\xff\xd8")
+
+    md = zf.read("recipes.md").decode()
+    assert "## 三杯雞" in md and "- 雞腿 — 300g" in md and "1. 雞腿切塊" in md and "★★★★★" in md
+
+
+def test_export_requires_sign_in(db):
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    assert TestClient(app).get("/api/export").status_code == 401

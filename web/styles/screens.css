@@ -482,6 +482,16 @@ textarea.editor-input--step {
   accent-color: var(--accent);
 }
 
+/* Settings: backup */
+.backup {
+  padding: 14px 16px 16px;
+}
+.backup__body {
+  margin: 0 0 12px;
+  font-size: var(--text-para);
+  color: var(--text-secondary);
+}
+
 /* Login */
 .login {
   min-height: 100dvh;

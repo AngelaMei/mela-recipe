@@ -14,7 +14,7 @@ The collection is defined in `web/lib/plates.ts` and drawn as SVG by `web/compon
 | `inkrim` | Ink rim · 黑邊深盤 | deep well, black edge | black brush print |
 | `plain` | Everyday white · 日常白盤 | plain | lemon stripes |
 
-All plates are top-down, lit from the top-left; the shadow is a CSS `drop-shadow` so it follows scalloped and petal edges.
+All plates are top-down, lit from the top-left; the shadow is a CSS `drop-shadow` so it follows scalloped and petal edges. The dish photo is cut to a soft, organic shape (not a circle) with a feathered edge and a faint shadow; each photo gets its own shape, the same everywhere it appears.
 
 ## Swapping in photographed plates
 

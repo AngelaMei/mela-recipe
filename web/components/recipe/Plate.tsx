@@ -48,9 +48,9 @@ export function Plate({ plateId, size, photoUrl, empty, glyph, label, selected, 
         <>
           <img className="plate__rim-img" src={def.image} alt="" />
           {photoUrl && (
-            <span className="plate__food" style={{ inset: `${def.foodInset ?? 22}%` }}>
-              <img src={photoUrl} alt="" loading="lazy" />
-            </span>
+            <svg className="plate__overlay" viewBox="0 0 200 200" aria-hidden="true">
+              <Food photoUrl={photoUrl} r={100 * (1 - (2 * (def.foodInset ?? 22)) / 100)} />
+            </svg>
           )}
         </>
       ) : (
@@ -106,16 +106,13 @@ function PlateSvg({ def, photoUrl, detail }: { def: PlateDef; photoUrl?: string 
   const id = (s: string) => `${uid}-${s}`;
   const path = outline(def, R);
   const wellR = R * def.wellR;
-  const foodR = Math.min(wellR * 0.9, 58);
+  const foodR = Math.min(wellR * 0.86, 56);
 
   return (
     <svg className="plate__svg" viewBox="0 0 200 200" aria-hidden="true">
       <defs>
         <clipPath id={id("shape")}>
           <path d={path} />
-        </clipPath>
-        <clipPath id={id("food")}>
-          <circle cx={C} cy={C} r={foodR} />
         </clipPath>
         {/* light from the top-left */}
         <linearGradient id={id("light")} x1="0.15" y1="0.1" x2="0.85" y2="0.95">
@@ -164,17 +161,7 @@ function PlateSvg({ def, photoUrl, detail }: { def: PlateDef; photoUrl?: string 
         <circle cx={C} cy={C} r={wellR} fill="none" stroke={`url(#${id("wellEdge")})`} strokeWidth={def.centreGlaze ? 0.8 : 2.2} />
 
         {/* dish photo */}
-        {photoUrl && (
-          <image
-            href={photoUrl}
-            x={C - foodR}
-            y={C - foodR}
-            width={foodR * 2}
-            height={foodR * 2}
-            preserveAspectRatio="xMidYMid slice"
-            clipPath={`url(#${id("food")})`}
-          />
-        )}
+        {photoUrl && <Food photoUrl={photoUrl} r={foodR} />}
 
         {/* light */}
         <rect width="200" height="200" fill={`url(#${id("light")})`} />
@@ -184,6 +171,85 @@ function PlateSvg({ def, photoUrl, detail }: { def: PlateDef; photoUrl?: string 
       <path d={path} fill="none" stroke={def.edge ?? "rgba(60,45,30,0.16)"} strokeWidth={def.edgeWidth ?? 0.8} />
       {!def.edge && <path d={outline(def, R - 1.2)} fill="none" stroke="#fff" strokeOpacity="0.55" strokeWidth="0.8" />}
     </svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// The dish: an organic, hand-cut shape instead of a perfect circle
+// ---------------------------------------------------------------------------
+
+function hash(text: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0) % 2147483646 || 1;
+}
+
+/**
+ * A smooth, slightly irregular closed shape around (C, C) with mean radius r.
+ * A few low-frequency waves give a soft, food-like outline; it stays within
+ * about ±9% of r, so it never touches the rim. Same seed, same shape.
+ */
+export function blobPath(seed: number, r: number): string {
+  const rand = seeded(seed);
+  const waves = [2, 3, 5].map((k, i) => ({
+    k,
+    amp: [0.045, 0.035, 0.018][i] * (0.6 + rand() * 0.8),
+    phase: rand() * Math.PI * 2,
+  }));
+  const n = 14;
+  const pts: [number, number][] = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + 0.2;
+    let k = 1;
+    for (const w of waves) k += w.amp * Math.sin(w.k * a + w.phase);
+    pts.push([C + r * k * Math.cos(a), C + r * k * Math.sin(a)]);
+  }
+  // Catmull-Rom through the points, as cubic Béziers
+  let d = `M${pts[0][0].toFixed(2)},${pts[0][1].toFixed(2)}`;
+  for (let i = 0; i < n; i++) {
+    const p0 = pts[(i - 1 + n) % n];
+    const p1 = pts[i];
+    const p2 = pts[(i + 1) % n];
+    const p3 = pts[(i + 2) % n];
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    d += `C${c1[0].toFixed(2)},${c1[1].toFixed(2)} ${c2[0].toFixed(2)},${c2[1].toFixed(2)} ${p2[0].toFixed(2)},${p2[1].toFixed(2)}`;
+  }
+  return `${d}Z`;
+}
+
+/** The dish photo in an organic shape, with a softly feathered edge and a faint shadow on the plate. */
+function Food({ photoUrl, r }: { photoUrl: string; r: number }) {
+  const uid = useId().replace(/:/g, "");
+  const shape = blobPath(hash(photoUrl), r);
+  const box = r * 1.12; // the shape reaches ~9% past r
+  return (
+    <g>
+      <defs>
+        <filter id={`${uid}-soft`} x="-10%" y="-10%" width="120%" height="120%">
+          <feGaussianBlur stdDeviation="0.7" />
+        </filter>
+        <filter id={`${uid}-shadow`} x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="2.4" />
+        </filter>
+        <mask id={`${uid}-mask`} maskUnits="userSpaceOnUse" x="0" y="0" width="200" height="200">
+          <path d={shape} fill="#fff" filter={`url(#${uid}-soft)`} />
+        </mask>
+      </defs>
+      <path d={shape} fill="#2b1a0c" opacity="0.18" transform="translate(1.6 2.4)" filter={`url(#${uid}-shadow)`} />
+      <image
+        href={photoUrl}
+        x={C - box}
+        y={C - box}
+        width={box * 2}
+        height={box * 2}
+        preserveAspectRatio="xMidYMid slice"
+        mask={`url(#${uid}-mask)`}
+      />
+    </g>
   );
 }
 

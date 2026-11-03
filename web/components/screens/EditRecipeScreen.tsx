@@ -17,12 +17,18 @@ export function EditRecipeScreen({ id }: { id: string }) {
   if (error) return <p className="empty">{t.genericError}</p>;
   if (!recipe) return null;
 
-  const save = async (draft: RecipeDraft) => {
+  const save = async ({ firstCook: _unused, ...draft }: RecipeDraft) => {
     const updated = await api.patch<Recipe>(`/api/recipes/${id}`, { ...draft, name: draft.name || null });
     await mutate(`/api/recipes/${id}`, updated, { revalidate: false });
     await mutate((k) => typeof k === "string" && (k.startsWith("/api/recipes?") || k.startsWith("/api/search")));
     router.replace(`/recipes/${id}`);
   };
 
-  return <RecipeEditor title={t.editRecipe} initial={recipe} onCancel={() => router.back()} onSave={save} />;
+  const remove = async () => {
+    await api.del(`/api/recipes/${id}`);
+    await mutate((k) => typeof k === "string" && (k.startsWith("/api/recipes") || k.startsWith("/api/search")));
+    router.replace("/recipes");
+  };
+
+  return <RecipeEditor title={t.editRecipe} initial={recipe} onCancel={() => router.back()} onSave={save} onDelete={remove} />;
 }

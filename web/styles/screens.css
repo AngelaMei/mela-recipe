@@ -92,6 +92,9 @@ html[lang="zh-Hant"] .overline {
 }
 
 /* Home */
+.home-count {
+  font-size: var(--text-caption);
+}
 .home-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -189,10 +192,15 @@ html[lang="zh-Hant"] .overline {
   top: calc(var(--status-bar) + 4px);
   left: 16px;
 }
-.hero__change {
+.hero__actions {
   position: absolute;
   top: calc(var(--status-bar) + 4px);
   right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hero__change {
   display: inline-flex;
   align-items: center;
   min-height: 42px;
@@ -379,6 +387,20 @@ textarea.editor-input--step {
 }
 .editor-step .icon-btn {
   margin-top: 3px;
+}
+
+.editor-made {
+  border-bottom: 0;
+}
+.plate-chooser {
+  gap: 10px;
+  padding-top: 6px;
+  padding-bottom: 8px;
+}
+.plate-chooser button {
+  flex: none;
+  border-radius: 50%;
+  padding: 0;
 }
 
 /* Plate picker */

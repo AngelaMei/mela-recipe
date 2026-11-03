@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import useSWR from "swr";
 
 import { Icon } from "@/components/core/Icon";
@@ -14,10 +13,9 @@ export function HomeScreen() {
   const { t, lang } = usePrefs();
   const router = useRouter();
   const { data: me } = useMe();
-  const { data } = useSWR<RecipeList>("/api/recipes?filter=made");
-
-  // The 9 most recently cooked (API sorts by latest log date). Not-made never appear.
-  const recent = (data?.recipes ?? []).slice(0, 9);
+  // Every recipe, most recently cooked first; ones not made yet come last (the API sorts them).
+  const { data } = useSWR<RecipeList>("/api/recipes?filter=all");
+  const recipes = data?.recipes ?? [];
   const household = me ? (lang === "zh" ? me.household.name_zh : me.household.name) : " ";
 
   return (
@@ -38,15 +36,13 @@ export function HomeScreen() {
       <section className="section" aria-labelledby="recent-head">
         <div className="section__head">
           <h2 id="recent-head" className="overline">
-            {t.recentlyMade}
+            {t.lastMadeFirst}
           </h2>
-          <Link href="/recipes" className="link">
-            {t.allRecipes}
-          </Link>
+          {data && <span className="muted home-count">{t.total(data.counts.all)}</span>}
         </div>
-        {data && recent.length === 0 && <p className="empty">{t.homeEmpty}</p>}
+        {data && recipes.length === 0 && <p className="empty">{t.recipesEmpty}</p>}
         <div className="home-grid">
-          {recent.map((r) => (
+          {recipes.map((r) => (
             <RecipeTile key={r.id} recipe={r} />
           ))}
         </div>

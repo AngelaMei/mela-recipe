@@ -4,14 +4,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/core/Button";
 import { IconButton } from "@/components/core/IconButton";
+import { Checkbox } from "@/components/forms/Checkbox";
 import { SegmentedControl } from "@/components/forms/SegmentedControl";
 import { TextArea, TextField } from "@/components/forms/TextField";
 import { TopBar } from "@/components/navigation/TopBar";
 import { api } from "@/lib/api";
 import { useDebounced } from "@/lib/hooks";
 import type { Strings } from "@/lib/i18n";
+import { DEFAULT_PLATE, PLATES } from "@/lib/plates";
 import { usePrefs } from "@/lib/prefs";
 import type { Ingredient, ParseResult, Recipe, Source } from "@/lib/types";
+
+import { emptyLog, LogFields, type LogDraft } from "./LogFields";
+import { Plate } from "./Plate";
 
 /*
  * New / edit recipe.
@@ -43,6 +48,8 @@ export interface RecipeDraft {
   source_url: string | null;
   ingredients: { name: string; portion: string | null }[];
   steps: string[];
+  /** New recipes only: "We've made this", saved as the first cook on the chosen plate. */
+  firstCook: { log: LogDraft; plate_id: string } | null;
 }
 
 let nextId = 1;
@@ -104,16 +111,25 @@ export function RecipeEditor({
   initial,
   onCancel,
   onSave,
+  onDelete,
 }: {
   title: string;
   initial?: Recipe;
   onCancel: () => void;
   onSave: (draft: RecipeDraft) => Promise<void>;
+  /** Editing only: delete the recipe. */
+  onDelete?: () => Promise<void>;
 }) {
   const { t, lang } = usePrefs();
   const editing = !!initial;
 
   const [name, setName] = useState(initial?.name === "Untitled recipe" ? "" : initial?.name ?? "");
+  // Most recipes we add are ones we've already cooked, so a new recipe starts with "We've made this" on.
+  const [madeIt, setMadeIt] = useState(!editing);
+  const [firstLog, setFirstLog] = useState<LogDraft>(emptyLog());
+  const [firstPlate, setFirstPlate] = useState(DEFAULT_PLATE);
+  const [uploading, setUploading] = useState(false);
+  const updateFirstLog = useCallback((patch: Partial<LogDraft>) => setFirstLog((d) => ({ ...d, ...patch })), []);
   const [nameAlt, setNameAlt] = useState(initial?.name_alt ?? "");
   const [note, setNote] = useState(initial?.note ?? "");
   const [url, setUrl] = useState(initial?.source_url ?? "");
@@ -237,6 +253,7 @@ export function RecipeEditor({
         source_url: url.trim() || null,
         ingredients,
         steps,
+        firstCook: !editing && madeIt ? { log: firstLog, plate_id: firstPlate } : null,
       });
     } catch {
       setError(t.genericError);
@@ -259,7 +276,7 @@ export function RecipeEditor({
           </button>
         }
         end={
-          <button type="button" className="topbar__link topbar__link--accent" onClick={save} disabled={!canSave}>
+          <button type="button" className="topbar__link topbar__link--accent" onClick={save} disabled={!canSave || uploading}>
             {saving ? t.saving : t.save}
           </button>
         }
@@ -436,8 +453,52 @@ export function RecipeEditor({
 
         <TextField id="note" label={t.savedNoteLabel} placeholder={t.savedNotePlaceholder} value={note} onChange={(e) => setNote(e.target.value)} />
 
+        {/* New recipe: log the cook at the same time */}
+        {!editing && (
+          <section className="editor-section" aria-labelledby="made-head">
+            <h2 id="made-head" className="heading">
+              {t.firstCookTitle}
+            </h2>
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={madeIt}
+              className="row editor-made"
+              onClick={() => setMadeIt((v) => !v)}
+            >
+              <Checkbox checked={madeIt} />
+              <span className="row__main">
+                <span className="row__title" style={{ display: "block" }}>{t.weveMadeThis}</span>
+                <span className="row__sub" style={{ display: "block" }}>{t.weveMadeThisHint}</span>
+              </span>
+            </button>
+            {madeIt && (
+              <>
+                <PlateChooser value={firstPlate} onChange={setFirstPlate} />
+                <LogFields idPrefix="first" value={firstLog} onChange={updateFirstLog} plateId={firstPlate} onUploading={setUploading} />
+              </>
+            )}
+          </section>
+        )}
+
         {error && <p className="error-text">{error}</p>}
         {!canSave && !saving && <p className="field__helper">{t.nothingToSave}</p>}
+
+        {/* Save at the bottom too, so a long recipe doesn't need scrolling back up */}
+        <Button variant="primary" block onClick={save} disabled={!canSave || uploading}>
+          {saving ? t.saving : t.saveRecipe}
+        </Button>
+        {onDelete && (
+          <button
+            type="button"
+            className="danger-link"
+            onClick={async () => {
+              if (window.confirm(t.confirmDelete)) await onDelete();
+            }}
+          >
+            {t.deleteRecipe}
+          </button>
+        )}
       </div>
     </main>
   );
@@ -495,5 +556,33 @@ function AutoTextArea({
         }
       }}
     />
+  );
+}
+
+/** Pick the plate for the first cook: a row of all plates, the chosen one ringed. */
+function PlateChooser({ value, onChange }: { value: string; onChange: (id: string) => void }) {
+  const { t, lang } = usePrefs();
+  const current = PLATES.find((p) => p.id === value) ?? PLATES[0];
+  return (
+    <div>
+      <span className="field__label" id="first-plate">
+        {t.plate}: <span className="muted">{current.name[lang]}</span>
+      </span>
+      <div className="chip-row plate-chooser" role="radiogroup" aria-labelledby="first-plate">
+        {PLATES.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            role="radio"
+            aria-checked={p.id === value}
+            aria-label={p.name[lang]}
+            className="pressable"
+            onClick={() => onChange(p.id)}
+          >
+            <Plate size={58} plateId={p.id} selected={p.id === value} decorative />
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }

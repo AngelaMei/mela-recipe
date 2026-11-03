@@ -36,7 +36,8 @@ export function RecipeScreen({ id }: { id: string }) {
   const [added, setAdded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [logOpen, setLogOpen] = useState<{ log: CookLog | null } | null>(null);
+  // first: the "We made it!" cook, followed by choosing a plate
+  const [logOpen, setLogOpen] = useState<{ log: CookLog | null; first?: boolean } | null>(null);
 
   useEffect(() => {
     setAdded(false);
@@ -78,29 +79,13 @@ export function RecipeScreen({ id }: { id: string }) {
     }
   };
 
-  const weMadeIt = async () => {
-    setBusy(true);
-    try {
-      await api.post(`/api/recipes/${recipe.id}/logs`, {});
-      await mutate();
-      refreshLists();
-      setPickerOpen(true); // a plate is picked after the first cook
-    } finally {
-      setBusy(false);
-    }
-  };
+  // First cook: write the log (rating, note, photo...), then pick a plate.
+  const weMadeIt = () => setLogOpen({ log: null, first: true });
 
   const choosePlate = async (plateId: string) => {
     await mutate(api.patch<Recipe>(`/api/recipes/${recipe.id}`, { plate_id: plateId }), { revalidate: false });
     refreshLists();
     setPickerOpen(false);
-  };
-
-  const remove = async () => {
-    if (!window.confirm(t.confirmDelete)) return;
-    await api.del(`/api/recipes/${recipe.id}`);
-    refreshLists();
-    router.replace("/recipes");
   };
 
   const sourceLabel = t.sourceLabel[recipe.source];
@@ -150,11 +135,20 @@ export function RecipeScreen({ id }: { id: string }) {
           variant="overlay"
           onClick={() => (window.history.length > 1 ? router.back() : router.push("/"))}
         />
-        {made && (
-          <button type="button" className="hero__change pressable" onClick={() => setPickerOpen(true)}>
-            {t.changePlate}
-          </button>
-        )}
+        <div className="hero__actions">
+          {made && (
+            <button type="button" className="hero__change pressable" onClick={() => setPickerOpen(true)}>
+              {t.changePlate}
+            </button>
+          )}
+          <IconButton
+            icon="edit"
+            iconSize={20}
+            label={t.editRecipe}
+            variant="overlay"
+            onClick={() => router.push(`/recipes/${recipe.id}/edit`)}
+          />
+        </div>
         <Plate
           size={200}
           plateId={recipe.plate_id}
@@ -265,14 +259,6 @@ export function RecipeScreen({ id }: { id: string }) {
           </>
         )}
 
-        <div className="detail__actions">
-          <Button size="sm" variant="secondary" icon="edit" onClick={() => router.push(`/recipes/${recipe.id}/edit`)}>
-            {t.editRecipe}
-          </Button>
-          <button type="button" className="danger-link" onClick={remove}>
-            {t.deleteRecipe}
-          </button>
-        </div>
       </div>
 
       {cta && <div className="sticky-cta">{cta}</div>}
@@ -290,11 +276,14 @@ export function RecipeScreen({ id }: { id: string }) {
         recipeId={recipe.id}
         plateId={recipe.plate_id}
         log={logOpen?.log ?? null}
+        title={logOpen?.first ? t.firstCookTitle : undefined}
         onClose={() => setLogOpen(null)}
         onSaved={async () => {
+          const first = logOpen?.first;
           setLogOpen(null);
           await mutate();
           refreshLists();
+          if (first) setPickerOpen(true); // a plate is picked after the first cook
         }}
       />
     </main>
